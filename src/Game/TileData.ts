@@ -23,4 +23,8 @@ class TileData {
 
 enum TileEffect {
     NONE = 0,
+    BOMB = 1,
+    CROSS = 2,
+    KIND = 3,
+    RANDOM = 4
 }

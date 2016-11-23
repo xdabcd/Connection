@@ -23,7 +23,7 @@ class GameData {
 	 * 获取格子颜色 (1: 2: 3: 4: )
 	 */
 	public static getTileColor(type: number): number {
-		var arr = [0x7DC9FD, 0xF45658, 0xFDBF3F, 0xB775D9];
-		return arr[type - 1];
+		var arr = [0, 0x7DC9FD, 0xF45658, 0xFDBF3F, 0xB775D9];
+		return arr[type];
 	}
 }

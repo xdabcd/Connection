@@ -22,5 +22,9 @@ egret.registerClass(TileData,'TileData');
 var TileEffect;
 (function (TileEffect) {
     TileEffect[TileEffect["NONE"] = 0] = "NONE";
+    TileEffect[TileEffect["BOMB"] = 1] = "BOMB";
+    TileEffect[TileEffect["CROSS"] = 2] = "CROSS";
+    TileEffect[TileEffect["KIND"] = 3] = "KIND";
+    TileEffect[TileEffect["RANDOM"] = 4] = "RANDOM";
 })(TileEffect || (TileEffect = {}));
 //# sourceMappingURL=TileData.js.map

@@ -10,6 +10,8 @@ class Tile extends egret.DisplayObjectContainer {
         this.addChild(this._selectEffect = new egret.Sprite);
         this.addChild(this._effectSprte = new egret.Sprite);
         this.width = this.height = this.size;
+        this._sprite.x = this._sprite.y = this._selectEffect.x = this._selectEffect.y
+            = this._effectSprte.x = this._effectSprte.y = this.size / 2;
         this.addTouch();
     }
 
@@ -112,7 +114,7 @@ class Tile extends egret.DisplayObjectContainer {
                 ObjectPool.push(self);
             });;
         switch (this._effect) {
-            
+
         }
     }
 
@@ -138,17 +140,12 @@ class Tile extends egret.DisplayObjectContainer {
         var size = this.size;
         var s = size * 3 / 7;
         DrawUtils.drawRoundRect(sprite, s, s, s / 3, s / 3, this.color);
+        AnchorUtils.setAnchor(sprite, 0.5);
 
         var se = this._selectEffect;
         DrawUtils.drawRoundRect(se, s, s, s / 3, s / 3, this.color);
-        se.x = size / 2;
-        se.y = size / 2;
         se.visible = false;
         AnchorUtils.setAnchor(se, 0.5);
-
-        sprite.x = size / 2;
-        sprite.y = size / 2;
-        AnchorUtils.setAnchor(sprite, 0.5);
     }
 
     /**
@@ -163,11 +160,19 @@ class Tile extends egret.DisplayObjectContainer {
             case TileEffect.NONE:
                 e.graphics.clear();
                 break;
-           
+            case TileEffect.BOMB:
+                DrawUtils.drawCircle(e, s / 8, 0xffffff);
+                break;
+            case TileEffect.CROSS:
+                DrawUtils.drawCross(e, s / 4, s / 20, 0xffffff);
+                break;
+            case TileEffect.KIND:
+                DrawUtils.drawTriangle(e, s / 8, s / 20, 0xffffff);
+                break;
+            case TileEffect.RANDOM:
+                DrawUtils.drawStar(e, s / 8, s / 20, 0xffffff);
+                break;
         }
-        e.x = s / 2;
-        e.y = s / 2;
-        AnchorUtils.setAnchor(e, 0.5);
     }
 
 	/**

@@ -44,6 +44,5 @@ class GameScene extends BaseScene {
      */
     public close(...param: any[]): void {
         super.close();
-
     }
 }

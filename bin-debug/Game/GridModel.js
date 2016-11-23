@@ -7,6 +7,7 @@ var GridModel = (function (_super) {
     __extends(GridModel, _super);
     function GridModel() {
         _super.apply(this, arguments);
+        this._interval = 50;
     }
     var d = __define,c=GridModel,p=c.prototype;
     /**
@@ -31,7 +32,7 @@ var GridModel = (function (_super) {
             this.setState(GridState.Select);
         }
         else if (this.isState(GridState.Select) && length) {
-            if (tileData.type == this._selectArr[0].type) {
+            if (this.curSelectType == 0 || tileData.type == 0 || this.curSelectType == tileData.type) {
                 var idx = this._selectArr.indexOf(tileData);
                 var end = this._selectArr[length - 1];
                 if (idx < 0 && tileData.pos.borderUpon(end.pos)) {
@@ -68,15 +69,39 @@ var GridModel = (function (_super) {
         var _this = this;
         this.setState(GridState.Remove);
         var removeTime = 0;
-        for (var i = 0; i < this._selectArr.length; i++) {
+        var length = this._selectArr.length;
+        for (var i = 0; i < length; i++) {
             var tileData = this._selectArr[i];
             var x = tileData.pos.x;
             var y = tileData.pos.y;
             removeTime = this.delTile(x, y);
         }
-        TimerManager.doTimer(removeTime, 1, function () {
+        var pos = this._selectArr[length - 1].pos.clone();
+        TimerManager.doTimer(removeTime + this._interval, 1, function () {
+            _this.addEffect(length, pos);
             _this.repair();
         }, this);
+    };
+    /**
+     * 生成带有效果的格子
+     */
+    p.addEffect = function (cnt, pos) {
+        var effect;
+        if (cnt >= 20) {
+            effect = TileEffect.RANDOM;
+        }
+        else if (cnt >= 14) {
+            effect = TileEffect.KIND;
+        }
+        else if (cnt >= 7) {
+            effect = TileEffect.CROSS;
+        }
+        else if (cnt >= 4) {
+            effect = TileEffect.BOMB;
+        }
+        if (effect) {
+            this._tileList[pos.x][pos.y] = this.addTile(pos.x, pos.y, 0, effect);
+        }
     };
     /**
      * 修复
@@ -113,7 +138,7 @@ var GridModel = (function (_super) {
             }
         }
         var moveTime = this.getMaxMoveDuration(moveList);
-        TimerManager.doTimer(moveTime, 1, function () {
+        TimerManager.doTimer(moveTime + this._interval, 1, function () {
             _this.updateMovePosition(moveList);
             _this.setState(GridState.Idle);
         }, this);
@@ -127,6 +152,52 @@ var GridModel = (function (_super) {
         var hor = this._hor;
         var ver = this._ver;
         switch (tileData.effect) {
+            case TileEffect.BOMB:
+                var minX = Math.max(0, x - 1);
+                var maxX = Math.min(hor, x + 2);
+                var minY = Math.max(0, y - 1);
+                var maxY = Math.min(ver, y + 2);
+                for (var i = minX; i < maxX; i++) {
+                    for (var j = minY; j < maxY; j++) {
+                        this.delTile(i, j);
+                    }
+                }
+                break;
+            case TileEffect.CROSS:
+                for (var i = 0; i < hor; i++) {
+                    this.delTile(i, y);
+                }
+                for (var i = 0; i < ver; i++) {
+                    this.delTile(x, i);
+                }
+                break;
+            case TileEffect.KIND:
+                var type = this.curSelectType;
+                for (var i = 0; i < hor; i++) {
+                    for (var j = 0; j < hor; j++) {
+                        var td = this.getTile(i, j);
+                        if (td && td.type == type)
+                            this.delTile(i, j);
+                    }
+                }
+                break;
+            case TileEffect.RANDOM:
+                var arr = [];
+                for (var i = 0; i < hor; i++) {
+                    for (var j = 0; j < hor; j++) {
+                        var td = this.getTile(i, j);
+                        if (td) {
+                            arr.push(td);
+                        }
+                    }
+                }
+                arr.sort(SortUtils.random);
+                var l = RandomUtils.limitInteger(22, 25);
+                l = Math.min(arr.length, l);
+                for (var i = 0; i < l; i++) {
+                    this.delTile(arr[i].pos.x, arr[i].pos.y);
+                }
+                break;
         }
     };
     /**
@@ -145,10 +216,13 @@ var GridModel = (function (_super) {
     /**
      * 添加格子
      */
-    p.addTile = function (x, y) {
+    p.addTile = function (x, y, type, effect) {
+        if (type === void 0) { type = null; }
+        if (effect === void 0) { effect = null; }
         var tileData = new TileData();
         tileData.pos = new Vector2(x, y);
-        tileData.type = this.randomType();
+        tileData.type = type == null ? this.randomType() : type;
+        tileData.effect = effect || TileEffect.NONE;
         this.creatTile(tileData);
         return tileData;
     };
@@ -261,6 +335,21 @@ var GridModel = (function (_super) {
     p.randomType = function () {
         return RandomUtils.limitInteger(1, 4);
     };
+    d(p, "curSelectType"
+        /**
+         * 当前选择类型
+         */
+        ,function () {
+            var type = 0;
+            for (var i = 0; i < this._selectArr.length; i++) {
+                type = this._selectArr[i].type;
+                if (type != 0) {
+                    break;
+                }
+            }
+            return type;
+        }
+    );
     /**
      * 设置状态
      */

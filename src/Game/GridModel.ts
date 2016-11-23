@@ -9,6 +9,7 @@ class GridModel extends BaseModel {
 	private _ver: number;
 	private _state: GridState;
 	private _selectArr: Array<TileData>;
+	private _interval: number = 50;
 
 	/**
 	 * 开始
@@ -32,7 +33,7 @@ class GridModel extends BaseModel {
 			this.select(tileData);
 			this.setState(GridState.Select);
 		} else if (this.isState(GridState.Select) && length) {
-			if (tileData.type == this._selectArr[0].type) {
+			if (this.curSelectType == 0 || tileData.type == 0 || this.curSelectType == tileData.type) {
 				var idx = this._selectArr.indexOf(tileData);
 				var end = this._selectArr[length - 1];
 				if (idx < 0 && tileData.pos.borderUpon(end.pos)) {
@@ -68,15 +69,38 @@ class GridModel extends BaseModel {
 	private remove() {
 		this.setState(GridState.Remove);
 		var removeTime = 0;
-		for (let i = 0; i < this._selectArr.length; i++) {
+		var length = this._selectArr.length;
+		for (let i = 0; i < length; i++) {
 			let tileData = this._selectArr[i];
 			let x = tileData.pos.x;
 			let y = tileData.pos.y;
 			removeTime = this.delTile(x, y);
 		}
-		TimerManager.doTimer(removeTime, 1, () => {
+
+		var pos = this._selectArr[length - 1].pos.clone();
+		TimerManager.doTimer(removeTime + this._interval, 1, () => {
+			this.addEffect(length, pos);
 			this.repair();
 		}, this);
+	}
+
+	/**
+	 * 生成带有效果的格子
+	 */
+	private addEffect(cnt: number, pos: Vector2) {
+		var effect;
+		if (cnt >= 20) {
+			effect = TileEffect.RANDOM;
+		} else if (cnt >= 14) {
+			effect = TileEffect.KIND;
+		} else if (cnt >= 7) {
+			effect = TileEffect.CROSS;
+		} else if (cnt >= 4) {
+			effect = TileEffect.BOMB;
+		}
+		if (effect) {
+			this._tileList[pos.x][pos.y] = this.addTile(pos.x, pos.y, 0, effect);
+		}
 	}
 
 	/**
@@ -98,7 +122,6 @@ class GridModel extends BaseModel {
 		for (let x: number = 0; x < removeArr.length; x++) {
 			let tmpArr: Array<number> = removeArr[x];
 			tmpArr.sort(SortUtils.sortNum);
-
 			for (let i: number = 0; i < tmpArr.length; i++) {
 				let tileData = this.addTile(x, i - tmpArr.length);
 				moveList.push(this.moveTile(tileData, new Vector2(x, i)));
@@ -115,7 +138,7 @@ class GridModel extends BaseModel {
 		}
 
 		var moveTime: number = this.getMaxMoveDuration(moveList);
-		TimerManager.doTimer(moveTime, 1, () => {
+		TimerManager.doTimer(moveTime + this._interval, 1, () => {
 			this.updateMovePosition(moveList);
 			this.setState(GridState.Idle);
 		}, this);
@@ -130,7 +153,52 @@ class GridModel extends BaseModel {
 		var hor = this._hor;
 		var ver = this._ver;
 		switch (tileData.effect) {
-
+			case TileEffect.BOMB:
+				let minX = Math.max(0, x - 1);
+				let maxX = Math.min(hor, x + 2);
+				let minY = Math.max(0, y - 1);
+				let maxY = Math.min(ver, y + 2);
+				for (let i = minX; i < maxX; i++) {
+					for (let j = minY; j < maxY; j++) {
+						this.delTile(i, j);
+					}
+				}
+				break;
+			case TileEffect.CROSS:
+				for (let i = 0; i < hor; i++) {
+					this.delTile(i, y);
+				}
+				for (let i = 0; i < ver; i++) {
+					this.delTile(x, i);
+				}
+				break;
+			case TileEffect.KIND:
+				let type = this.curSelectType;
+				for (let i = 0; i < hor; i++) {
+					for (let j = 0; j < hor; j++) {
+						var td = this.getTile(i, j);
+						if (td && td.type == type)
+							this.delTile(i, j);
+					}
+				}
+				break;
+			case TileEffect.RANDOM:
+				let arr = [];
+				for (let i = 0; i < hor; i++) {
+					for (let j = 0; j < hor; j++) {
+						var td = this.getTile(i, j);
+						if (td) {
+							arr.push(td);
+						}
+					}
+				}
+				arr.sort(SortUtils.random);
+				let l = RandomUtils.limitInteger(22, 25);
+				l = Math.min(arr.length, l);
+				for (let i = 0; i < l; i++) {
+					this.delTile(arr[i].pos.x, arr[i].pos.y);
+				}
+				break;
 		}
 	}
 
@@ -151,10 +219,11 @@ class GridModel extends BaseModel {
 	/**
 	 * 添加格子
 	 */
-	private addTile(x: number, y: number): TileData {
+	private addTile(x: number, y: number, type: number = null, effect: TileEffect = null): TileData {
 		var tileData = new TileData();
 		tileData.pos = new Vector2(x, y);
-		tileData.type = this.randomType();
+		tileData.type = type == null ? this.randomType() : type;
+		tileData.effect = effect || TileEffect.NONE;
 		this.creatTile(tileData);
 		return tileData;
 	}
@@ -284,6 +353,20 @@ class GridModel extends BaseModel {
 	 */
 	private randomType(): number {
 		return RandomUtils.limitInteger(1, 4);
+	}
+
+	/**
+	 * 当前选择类型
+	 */
+	private get curSelectType(): number {
+		var type = 0;
+		for (let i = 0; i < this._selectArr.length; i++) {
+			type = this._selectArr[i].type;
+			if (type != 0) {
+				break;
+			}
+		}
+		return type;
 	}
 
 	/**
