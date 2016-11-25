@@ -7,8 +7,15 @@ var TileData = (function () {
     function TileData() {
         /** 效果 */
         this.effect = TileEffect.NONE;
+        this._id = TileData.cnt;
+        TileData.cnt += 1;
     }
     var d = __define,c=TileData,p=c.prototype;
+    d(p, "id"
+        ,function () {
+            return this._id;
+        }
+    );
     p.clone = function () {
         var data = new TileData();
         data.pos = this.pos.clone();
@@ -16,6 +23,7 @@ var TileData = (function () {
         data.effect = this.effect;
         return data;
     };
+    TileData.cnt = 0;
     return TileData;
 }());
 egret.registerClass(TileData,'TileData');

@@ -13,6 +13,7 @@ var EgretExpandManager = (function () {
     EgretExpandManager.init = function () {
         AnchorUtils.init();
         TimerManager.init();
+        TweenManager.init();
     };
     return EgretExpandManager;
 }());

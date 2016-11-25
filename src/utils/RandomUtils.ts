@@ -18,13 +18,13 @@ class RandomUtils {
     }
 
     /**
-     * 获取一个区间的随机数(帧数)
+     * 获取一个区间的随机数(整数)
      * @param $from 最小值
      * @param $end 最大值
      * @returns {number}
      */
     public static limitInteger($from: number,$end: number): number {
-        return Math.round(this.limit($from,$end));
+        return Math.floor(this.limit($from,$end + 1));
     }
 
     /**

@@ -16,13 +16,13 @@ var GameData = (function () {
     d(GameData, "ver"
         /** 纵向个数 */
         ,function () {
-            return 7;
+            return 8;
         }
     );
     d(GameData, "tileSize"
         /** 格子大小 */
         ,function () {
-            return 80;
+            return 92;
         }
     );
     /**

@@ -11,12 +11,12 @@ class GameData {
 
 	/** 纵向个数 */
 	public static get ver(): number {
-		return 7;
+		return 8;
 	}
 
 	/** 格子大小 */
 	public static get tileSize(): number {
-		return 80;
+		return 92;
 	}
 
 	/** 

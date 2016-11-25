@@ -1,29 +1,170 @@
 {
 	"groups": [
 		{
-			"keys": "bg_jpg,egret_icon_png,description_json",
+			"keys": "times_bg_png,time_progress_png,time_bg_png,score_bg_png,item_4_png,item_3_png,item_2_png,item_1_png,hint_png,gem_bg_2_png,gem_4_png,gem_4_s_png,gem_4_l_png,gem_3_png,gem_3_s_png,gem_3_l_png,gem_2_png,gem_2_s_png,gem_2_l_png,gem_1_png,gem_1_s_png,gem_1_l_png,chest_bg_png,btn_pause_png,arrow_png,bg_png,grid_border_2_png,grid_border_1_png,grid_bg_png,gem_bg_1_png,grid_bottom_png",
 			"name": "loading"
 		},
 		{
-			"keys": "description_json",
+			"keys": "arrow_png,grid_bottom_png",
 			"name": "preload"
 		}
 	],
 	"resources": [
 		{
-			"url": "assets/bg.jpg",
+			"url": "assets/arrow.png",
 			"type": "image",
-			"name": "bg_jpg"
+			"name": "arrow_png"
 		},
 		{
-			"url": "assets/egret_icon.png",
+			"url": "assets/btn_pause.png",
 			"type": "image",
-			"name": "egret_icon_png"
+			"name": "btn_pause_png"
 		},
 		{
-			"url": "config/description.json",
-			"type": "json",
-			"name": "description_json"
+			"url": "assets/chest_bg.png",
+			"type": "image",
+			"name": "chest_bg_png"
+		},
+		{
+			"url": "assets/gem_1_l.png",
+			"type": "image",
+			"name": "gem_1_l_png"
+		},
+		{
+			"url": "assets/gem_1_s.png",
+			"type": "image",
+			"name": "gem_1_s_png"
+		},
+		{
+			"url": "assets/gem_1.png",
+			"type": "image",
+			"name": "gem_1_png"
+		},
+		{
+			"url": "assets/gem_2_l.png",
+			"type": "image",
+			"name": "gem_2_l_png"
+		},
+		{
+			"url": "assets/gem_2_s.png",
+			"type": "image",
+			"name": "gem_2_s_png"
+		},
+		{
+			"url": "assets/gem_2.png",
+			"type": "image",
+			"name": "gem_2_png"
+		},
+		{
+			"url": "assets/gem_3_l.png",
+			"type": "image",
+			"name": "gem_3_l_png"
+		},
+		{
+			"url": "assets/gem_3_s.png",
+			"type": "image",
+			"name": "gem_3_s_png"
+		},
+		{
+			"url": "assets/gem_3.png",
+			"type": "image",
+			"name": "gem_3_png"
+		},
+		{
+			"url": "assets/gem_4_l.png",
+			"type": "image",
+			"name": "gem_4_l_png"
+		},
+		{
+			"url": "assets/gem_4_s.png",
+			"type": "image",
+			"name": "gem_4_s_png"
+		},
+		{
+			"url": "assets/gem_4.png",
+			"type": "image",
+			"name": "gem_4_png"
+		},
+		{
+			"url": "assets/gem_bg_1.png",
+			"type": "image",
+			"name": "gem_bg_1_png"
+		},
+		{
+			"url": "assets/gem_bg_2.png",
+			"type": "image",
+			"name": "gem_bg_2_png"
+		},
+		{
+			"url": "assets/hint.png",
+			"type": "image",
+			"name": "hint_png"
+		},
+		{
+			"url": "assets/item_1.png",
+			"type": "image",
+			"name": "item_1_png"
+		},
+		{
+			"url": "assets/item_2.png",
+			"type": "image",
+			"name": "item_2_png"
+		},
+		{
+			"url": "assets/item_3.png",
+			"type": "image",
+			"name": "item_3_png"
+		},
+		{
+			"url": "assets/item_4.png",
+			"type": "image",
+			"name": "item_4_png"
+		},
+		{
+			"url": "assets/score_bg.png",
+			"type": "image",
+			"name": "score_bg_png"
+		},
+		{
+			"url": "assets/time_bg.png",
+			"type": "image",
+			"name": "time_bg_png"
+		},
+		{
+			"url": "assets/time_progress.png",
+			"type": "image",
+			"name": "time_progress_png"
+		},
+		{
+			"url": "assets/times_bg.png",
+			"type": "image",
+			"name": "times_bg_png"
+		},
+		{
+			"url": "assets/bg.png",
+			"type": "image",
+			"name": "bg_png"
+		},
+		{
+			"url": "assets/grid_bg.png",
+			"type": "image",
+			"name": "grid_bg_png",
+			"scale9grid": "6,7,8,5"
+		},
+		{
+			"url": "assets/grid_border_1.png",
+			"type": "image",
+			"name": "grid_border_1_png"
+		},
+		{
+			"url": "assets/grid_border_2.png",
+			"type": "image",
+			"name": "grid_border_2_png"
+		},
+		{
+			"url": "assets/grid_bottom.png",
+			"type": "image",
+			"name": "grid_bottom_png"
 		}
 	]
 }

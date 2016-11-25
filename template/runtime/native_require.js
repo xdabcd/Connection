@@ -9,6 +9,7 @@ var game_file_list = [
 	"libs/modules/res/res.js",
 	"libs/modules/tween/tween.js",
 	"bin-debug/EgretExpendManager.js",
+	"bin-debug/Game/Arrow.js",
 	"bin-debug/Game/GameCmd.js",
 	"bin-debug/mvc/BaseController.js",
 	"bin-debug/Game/GameController.js",
@@ -53,6 +54,7 @@ var game_file_list = [
 	"bin-debug/utils/StringUtils.js",
 	"bin-debug/utils/TextFlowMaker.js",
 	"bin-debug/utils/TimerManager.js",
+	"bin-debug/utils/TweenManager.js",
 	//----auto game_file_list end----
 ];
 

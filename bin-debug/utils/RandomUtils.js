@@ -20,13 +20,13 @@ var RandomUtils = (function () {
         return $from + Math.random() * range;
     };
     /**
-     * 获取一个区间的随机数(帧数)
+     * 获取一个区间的随机数(整数)
      * @param $from 最小值
      * @param $end 最大值
      * @returns {number}
      */
     RandomUtils.limitInteger = function ($from, $end) {
-        return Math.round(this.limit($from, $end));
+        return Math.floor(this.limit($from, $end + 1));
     };
     /**
      * 在一个数组中随机获取一个元素

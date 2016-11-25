@@ -10,7 +10,16 @@ class TileData {
     public type: number;
     /** 效果 */
     public effect: number = TileEffect.NONE;
-  
+
+    private _id: number;
+    private static cnt: number = 0;
+    public constructor() {
+        this._id = TileData.cnt;
+        TileData.cnt += 1;
+    }
+    public get id(): number {
+        return this._id;
+    }
 
     public clone(): TileData {
         var data = new TileData();

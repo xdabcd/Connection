@@ -28,20 +28,35 @@ var GridModel = (function (_super) {
         var length = this._selectArr.length;
         if (this.isState(GridState.Idle)) {
             this._selectArr = [tileData];
-            this.select(tileData);
+            this.select(tileData, false);
             this.setState(GridState.Select);
         }
         else if (this.isState(GridState.Select) && length) {
             if (this.curSelectType == 0 || tileData.type == 0 || this.curSelectType == tileData.type) {
                 var idx = this._selectArr.indexOf(tileData);
                 var end = this._selectArr[length - 1];
+                var cr1 = this.canRemove;
                 if (idx < 0 && tileData.pos.borderUpon(end.pos)) {
                     this._selectArr.push(tileData);
-                    this.select(tileData);
+                    var cr2 = this.canRemove;
+                    this.connect(end, tileData, cr2);
+                    this.sign();
+                    if (!cr1 && cr2) {
+                        for (var i = 0; i < length; i++) {
+                            this.select(this._selectArr[i], true);
+                        }
+                    }
                 }
                 else if (idx == length - 2) {
                     ArrayUtils.remove(this._selectArr, end);
+                    var cr2 = this.canRemove;
                     this.unselect(end);
+                    this.sign();
+                    if (cr1 && !cr2) {
+                        for (var i = 0; i < length - 1; i++) {
+                            this.select(this._selectArr[i], false);
+                        }
+                    }
                 }
             }
         }
@@ -50,14 +65,13 @@ var GridModel = (function (_super) {
      * 触摸结束
      */
     p.touchEnd = function () {
-        if (this._selectArr.length >= 3) {
+        for (var i = 0; i < this._selectArr.length; i++) {
+            this.unselect(this._selectArr[i]);
+        }
+        if (this.canRemove) {
             this.remove();
         }
         else {
-            /** 取消 */
-            for (var i = 0; i < this._selectArr.length; i++) {
-                this.unselect(this._selectArr[i]);
-            }
             this.setState(GridState.Idle);
         }
         this._selectArr = [];
@@ -144,9 +158,44 @@ var GridModel = (function (_super) {
         }, this);
     };
     /**
+     * 标记
+     */
+    p.sign = function () {
+        this._signArr = [];
+        if (this.canRemove) {
+            this.getSign(this._selectArr);
+        }
+        this.applyFunc(GridCmd.TILE_SIGN, this._signArr);
+    };
+    /**
+     * 获取标记列表
+     */
+    p.getSign = function (arr) {
+        for (var i = 0; i < arr.length; i++) {
+            var posArr = this.getEffect(arr[i]);
+            for (var j = 0; j < posArr.length; j++) {
+                var t = this.getTile(posArr[j].x, posArr[j].y);
+                if (this._selectArr.indexOf(t) < 0 && this._signArr.indexOf(t) < 0) {
+                    this._signArr.push(t);
+                    this.getSign([t]);
+                }
+            }
+        }
+    };
+    /**
      * 执行效果
      */
     p.doEffect = function (tileData) {
+        var posArr = this.getEffect(tileData);
+        for (var i = 0; i < posArr.length; i++) {
+            this.delTile(posArr[i].x, posArr[i].y);
+        }
+    };
+    /**
+     * 获取效果
+     */
+    p.getEffect = function (tileData) {
+        var posArr = [];
         var x = tileData.pos.x;
         var y = tileData.pos.y;
         var hor = this._hor;
@@ -159,46 +208,51 @@ var GridModel = (function (_super) {
                 var maxY = Math.min(ver, y + 2);
                 for (var i = minX; i < maxX; i++) {
                     for (var j = minY; j < maxY; j++) {
-                        this.delTile(i, j);
+                        posArr.push(new Vector2(i, j));
                     }
                 }
                 break;
             case TileEffect.CROSS:
                 for (var i = 0; i < hor; i++) {
-                    this.delTile(i, y);
+                    posArr.push(new Vector2(i, y));
                 }
                 for (var i = 0; i < ver; i++) {
-                    this.delTile(x, i);
+                    posArr.push(new Vector2(x, i));
                 }
                 break;
             case TileEffect.KIND:
                 var type = this.curSelectType;
                 for (var i = 0; i < hor; i++) {
-                    for (var j = 0; j < hor; j++) {
+                    for (var j = 0; j < ver; j++) {
                         var td = this.getTile(i, j);
                         if (td && td.type == type)
-                            this.delTile(i, j);
+                            posArr.push(new Vector2(i, j));
                     }
                 }
                 break;
             case TileEffect.RANDOM:
                 var arr = [];
                 for (var i = 0; i < hor; i++) {
-                    for (var j = 0; j < hor; j++) {
+                    for (var j = 0; j < ver; j++) {
                         var td = this.getTile(i, j);
                         if (td) {
                             arr.push(td);
                         }
                     }
                 }
-                arr.sort(SortUtils.random);
-                var l = RandomUtils.limitInteger(22, 25);
-                l = Math.min(arr.length, l);
+                arr.sort(function (a, b) {
+                    var seed = tileData.id;
+                    seed = (seed * 9301 + 49297) % 233280;
+                    var rnd = seed / 233280.0;
+                    return rnd - 0.5;
+                });
+                var l = Math.min(arr.length, 23);
                 for (var i = 0; i < l; i++) {
-                    this.delTile(arr[i].pos.x, arr[i].pos.y);
+                    posArr.push(new Vector2(arr[i].pos.x, arr[i].pos.y));
                 }
                 break;
         }
+        return posArr;
     };
     /**
      * 初始化格子列表
@@ -254,10 +308,16 @@ var GridModel = (function (_super) {
         this.applyFunc(GridCmd.TILE_REMOVE, tileData, duration);
     };
     /**
+     * 连接格子
+     */
+    p.connect = function (src, dest, hl) {
+        this.applyFunc(GridCmd.TILE_CONNECT, src, dest, hl);
+    };
+    /**
      * 选择格子
      */
-    p.select = function (tileData) {
-        this.applyFunc(GridCmd.TILE_SELECT, tileData);
+    p.select = function (tileData, hl) {
+        this.applyFunc(GridCmd.TILE_SELECT, tileData, hl);
     };
     /**
      * 取消选择格子
@@ -348,6 +408,14 @@ var GridModel = (function (_super) {
                 }
             }
             return type;
+        }
+    );
+    d(p, "canRemove"
+        /**
+         * 是否可消除
+         */
+        ,function () {
+            return this._selectArr.length >= 3;
         }
     );
     /**

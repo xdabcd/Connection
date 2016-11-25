@@ -4,8 +4,15 @@
  * 
  */
 class Grid extends BaseScene {
-	private _size: number = 560;
+	private _bg: egret.Bitmap;
+	private _border1: egret.Bitmap;
+	private _border2: egret.Bitmap;
+	private _bottom: egret.Bitmap;
+
+	private _gridCon: egret.DisplayObjectContainer;
+	private _arrowCon: egret.DisplayObjectContainer;
 	private _tileCon: egret.DisplayObjectContainer;
+	private _arrows: Array<Arrow>;
 
 	public constructor() {
         super();
@@ -17,14 +24,54 @@ class Grid extends BaseScene {
      */
     protected init() {
 		super.init();
+		this.addChild(this._bg = DisplayUtils.createBitmap("grid_bg_png"));
+		this._border1 = DisplayUtils.createBitmap("grid_border_1_png");
+		this._border2 = DisplayUtils.createBitmap("grid_border_2_png");
+		this._bottom = DisplayUtils.createBitmap("grid_bottom_png");
+		this.width = this._bg.width = this._border1.width + this._border2.width + 640;
+		this.height = this._bg.height = this._border1.height;
+
+		this.addChild(this._gridCon = new egret.DisplayObjectContainer);
+		this.initGrid();
+
+		this.addChild(this._arrowCon = new egret.DisplayObjectContainer);
+		this._arrows = [];
+
         this.addChild(this._tileCon = new egret.DisplayObjectContainer);
 
-		this.width = this.height = this._size;
-		AnchorUtils.setAnchor(this, 0.5);
+		this.addChild(this._border1);
+		this.addChild(this._border2);
+		this.addChild(this._bottom);
+		AnchorUtils.setAnchor(this._border2, 1);
+		this._border2.x = this.width;
+		this._border2.y = this.height;
+		AnchorUtils.setAnchorX(this._bottom, 0.5);
+		AnchorUtils.setAnchorY(this._bottom, 1);
+		this._bottom.x = this.width / 2;
+		this._bottom.y = this.height;
 
-        StageUtils.stage.addEventListener(egret.TouchEvent.TOUCH_END, this.onEnd, this);
-        StageUtils.stage.addEventListener(egret.TouchEvent.TOUCH_RELEASE_OUTSIDE, this.onEnd, this);
+		this.touchEnabled = true;
+       	this.stage.addEventListener(egret.TouchEvent.TOUCH_END, this.onEnd, this);
+        this.stage.addEventListener(egret.TouchEvent.TOUCH_RELEASE_OUTSIDE, this.onEnd, this);
     }
+
+	/**
+	 * 初始化网格
+	 */
+	private initGrid() {
+		for (let x = 0; x < this.hor; x++) {
+			for (let y = 0; y < this.ver; y++) {
+				if ((x + y) % 2) {
+					let tp = this.getTruePosition(x, y);
+					let g = DisplayUtils.createBitmap("gem_bg_1_png");
+					AnchorUtils.setAnchor(g, 0.5);
+					g.x = tp.x;
+					g.y = tp.y;
+					this._gridCon.addChild(g);
+				}
+			}
+		}
+	}
 
 	/**
 	 * 创建格子
@@ -55,12 +102,43 @@ class Grid extends BaseScene {
 	}
 
 	/**
+	 * 标记格子
+	 */
+	public signTiles(arr: Array<TileData>) {
+		for (let i = 0; i < this._tileCon.numChildren; i++) {
+			let tile = this._tileCon.getChildAt(i) as Tile;
+			let f = false;
+			for (let j = 0; j < arr.length; j++) {
+				if (tile.pos.equalTo(arr[j].pos)) {
+					f = true;
+				}
+			}
+			tile.sign = f;
+		}
+	}
+
+	/**
+	 * 连接格子
+	 */
+	public connectTile(src: TileData, dest: TileData, hl: boolean) {
+		var tile1 = this.findTile(src.pos);
+		var tile2 = this.findTile(dest.pos);
+
+		if (tile2) {
+			tile2.select(hl);
+			if (tile1) {
+				this.addArrow(tile1.x, tile1.y, tile2.x, tile2.y);
+			}
+		}
+	}
+
+	/**
 	 * 选中格子
 	 */
-	public selectTile(tileData: TileData) {
+	public selectTile(tileData: TileData, hl: boolean) {
 		var tile = this.findTile(tileData.pos);
 		if (tile) {
-			tile.select();
+			tile.select(hl);
 		}
 	}
 
@@ -71,6 +149,7 @@ class Grid extends BaseScene {
 		var tile = this.findTile(tileData.pos);
 		if (tile) {
 			tile.unselect();
+			this.delArrow();
 		}
 	}
 
@@ -111,6 +190,27 @@ class Grid extends BaseScene {
 	}
 
 	/**
+	 * 添加箭头
+	 */
+	public addArrow(x1: number, y1: number, x2: number, y2: number) {
+		var arrow = ObjectPool.pop("Arrow") as Arrow;
+		arrow.x = (x1 + x2) / 2;
+		arrow.y = (y1 + y2) / 2;
+		arrow.rotation = MathUtils.getAngle(MathUtils.getRadian2(x1, y1, x2, y2));
+		this._arrowCon.addChild(arrow);
+		this._arrows.push(arrow);
+	}
+
+	/**
+	 * 删除箭头
+	 */
+	public delArrow() {
+		if (this._arrows.length) {
+			this._arrows.pop().destroy();
+		}
+	}
+
+	/**
 	 * 格子触摸回调
 	 */
 	private tileOnTouch(pos: Vector2) {
@@ -141,8 +241,8 @@ class Grid extends BaseScene {
 	 * 获取格子的真实位置
 	 */
 	private getTruePosition(x: number, y: number) {
-		var x: number = x * this._size / this.hor;
-		var y: number = y * this._size / this.ver;
+		var x = this.width / 2 + this.tileSize * (x - this.hor / 2 + 1 / 2);
+		var y = this.tileSize * (y + 1 / 2) + this.top;
 		return new Vector2(x, y);
 	}
 
@@ -152,5 +252,13 @@ class Grid extends BaseScene {
 
 	private get ver(): number {
 		return GameData.ver;
+	}
+
+	private get tileSize(): number {
+		return GameData.tileSize;
+	}
+
+	private get top(): number {
+		return 5;
 	}
 }

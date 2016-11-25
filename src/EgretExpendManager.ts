@@ -10,5 +10,6 @@ class EgretExpandManager {
     public static init(): void {
         AnchorUtils.init();
         TimerManager.init();
+        TweenManager.init();
     }
 }
