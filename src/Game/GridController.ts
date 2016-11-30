@@ -17,6 +17,8 @@ class GridController extends BaseController {
 		/** M->V */
 		this.registerFunc(GridCmd.TILE_CREATE, this.createTile, this);
 		this.registerFunc(GridCmd.TILE_REMOVE, this.removeTile, this);
+		this.registerFunc(GridCmd.TILE_HIT, this.hitTile, this);
+		this.registerFunc(GridCmd.TILE_SHAKE, this.shakeTile, this);
 		this.registerFunc(GridCmd.TILE_SIGN, this.signTiles, this);
 		this.registerFunc(GridCmd.TILE_CONNECT, this.connectTile, this);
 		this.registerFunc(GridCmd.TILE_SELECT, this.selectTile, this);
@@ -59,6 +61,20 @@ class GridController extends BaseController {
 	 */
 	private removeTile(tileData: TileData, duration: number) {
 		this.scene.removeTile(tileData, duration);
+	}
+
+	/**
+	 * 击中格子
+	 */
+	private hitTile(tileData: TileData, duration: number, direction: Direction) {
+		this.scene.hitTile(tileData, duration, direction);
+	}
+
+	/**
+	 * 震动格子
+	 */
+	public shakeTile(tileData: TileData, src: TileData) {
+		this.scene.shakeTile(tileData, src);
 	}
 
 	/**

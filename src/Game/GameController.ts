@@ -8,9 +8,18 @@ class GameController extends BaseController {
 		super(scene);
 		this._model = new GameModel(this);
 		ControllerManager.instance.register(ControllerID.Game, this);
+
+		this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
 	}
 
-	
+
+	/**
+	 * 添加得分
+	 */
+	private addScore(score: number, pos: Vector2, type: number) {
+		this.scene.showScore(score, pos, type);
+	}
+
 	/**
 	 * 数据
 	 */

@@ -1,1 +1,1 @@
-{"version":3,"file":"GameCmd.js","sourceRoot":"","sources":["../../src/Game/GameCmd.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AACH;IAAA;IAEA,CAAC;;IADc,kBAAU,GAAW,YAAY,CAAC;IACjD,cAAC;AAAD,CAAC,AAFD,IAEC;oBAFK,OAAO;AAEZ"}
+{"version":3,"file":"GameCmd.js","sourceRoot":"","sources":["../../src/Game/GameCmd.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AACH;IAAA;IAGA,CAAC;;IAFc,kBAAU,GAAW,YAAY,CAAC;IAClC,iBAAS,GAAW,WAAW,CAAC;IAC/C,cAAC;AAAD,CAAC,AAHD,IAGC;oBAHK,OAAO;AAGZ"}

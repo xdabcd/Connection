@@ -21,14 +21,16 @@ var Tile = (function (_super) {
         this._icon.scaleX = this._icon.scaleY = 1;
         this._icon.rotation = 0;
         this._icon.alpha = 1;
+        this.alpha = 1;
+        this.rotation = 0;
         this._signIcon.visible = false;
         this._isSelect = false;
+        this.touchEnabled = true;
     };
     /**
      * 添加触摸
      */
     p.addTouch = function () {
-        this.touchEnabled = true;
         this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
         this.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
     };
@@ -97,14 +99,15 @@ var Tile = (function (_super) {
      * 消除
      */
     p.remove = function (duration) {
+        this.unEnable();
+        this.pos = new Vector2(-100, -100);
         var self = this;
         this.sign = false;
         var tween = new Tween(this._icon);
         tween.to = { scaleX: 0.2, scaleY: 0.2 };
         tween.duration = duration;
         tween.callBack = function () {
-            DisplayUtils.removeFromParent(self);
-            ObjectPool.push(self);
+            self.destroy();
         };
         tween.start();
         switch (this._effect) {
@@ -113,24 +116,76 @@ var Tile = (function (_super) {
     /**
      * 击飞
      */
-    p.hit = function () {
+    p.hit = function (direction, duration) {
         var _this = this;
-        var v = 20;
-        var a = 30;
+        this.unEnable();
+        if (direction == Direction.Center) {
+            this.destroy();
+        }
+        var m;
+        var v;
+        switch (direction) {
+            case Direction.Left:
+                v = 300;
+                m = -RandomUtils.limit(0.6, 1.1);
+                break;
+            case Direction.Right:
+                v = 300;
+                m = RandomUtils.limit(0.6, 1.1);
+                break;
+            case Direction.Up:
+                v = 600;
+                m = RandomUtils.limit(0.05, 0.15) * (Math.random() > 0.5 ? 1 : -1);
+                break;
+            case Direction.Down:
+                v = 120;
+                m = RandomUtils.limit(2.05, 2.15) * (Math.random() > 0.5 ? 1 : -1);
+                break;
+        }
+        var a = Math.PI / 2 * m;
         var vx = v * Math.sin(a);
         var vy = v * Math.cos(a);
         var tween = new Tween(this);
         var x = this.x;
         var y = this.y;
         tween.updateFunc = function (t) {
-            t /= 100;
-            _this.x = x + vx * t;
-            _this.y = y - vy * t + 10 * t * t / 2;
-            console.log(x);
-            console.log(vx * t);
+            t /= 1000;
+            var ax = vx * t;
+            var ay = -vy * t + 1200 * t * t / 2;
+            _this.x = x + ax;
+            _this.y = y + ay;
+            _this.alpha = 1 - (t - 0.5);
+            _this.rotation = Math.atan(ay / ax) / Math.PI * 180;
         };
-        tween.duration = 2000;
+        tween.callBack = function () {
+            _this.destroy();
+        };
+        tween.duration = 1200;
         tween.start();
+    };
+    /**
+     * 震动
+     */
+    p.shake = function (x, y) {
+        // var d = MathUtils.getDistance(this.x, this.y, x, y);
+        // var r = MathUtils.getRadian2(x, y, this.x, this.y);
+        // var l = 5000 / d;
+        // console.log(l);
+        // var tw = new Tween(this._icon);
+        // tw.to = {
+        //     x: l * Math.sin(r),
+        //     y: l * Math.cos(r)
+        // };
+        // tw.duration = 500;
+        // tw.start();
+    };
+    /**
+     * 无效
+     */
+    p.unEnable = function () {
+        this._signIcon.visible = false;
+        this.pos = new Vector2(0, 100);
+        this.touchEnabled = false;
     };
     /**
      * 移动
@@ -180,6 +235,14 @@ var Tile = (function (_super) {
             this._pos = value;
         }
     );
+    /**
+     * 销毁
+     */
+    p.destroy = function () {
+        TweenManager.removeTween(this);
+        DisplayUtils.removeFromParent(this);
+        ObjectPool.push(this);
+    };
     return Tile;
 }(egret.DisplayObjectContainer));
 egret.registerClass(Tile,'Tile');

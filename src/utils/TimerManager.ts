@@ -22,7 +22,7 @@ class TimerManager {
         this._count = 0;
         this._timeScale = 1;
 
-        egret.Ticker.getInstance().register(this.onEnterFrame,this);
+        egret.Ticker.getInstance().register(this.onEnterFrame, this);
     }
 
     /**
@@ -34,6 +34,13 @@ class TimerManager {
     }
 
     /**
+     * 获取时间参数
+     */
+    public static getTimeScale(): number {
+        return this._timeScale;
+    }
+
+    /**
      * 每帧执行函数
      * @param frameTime
      */
@@ -41,20 +48,20 @@ class TimerManager {
         this._currFrame++;
         this._currTime = egret.getTimer();
         DebugUtils.start("TimerManager:");
-        for(var i: number = 0;i < this._count;i++) {
+        for (var i: number = 0; i < this._count; i++) {
             var handler: TimerHandler = this._handlers[i];
             var t: number = handler.userFrame ? this._currFrame : this._currTime;
-            if(t >= handler.exeTime) {
+            if (t >= handler.exeTime) {
                 DebugUtils.start(handler.method.toString());
-                handler.method.call(handler.methodObj,(this._currTime - handler.dealTime) * this._timeScale);
+                handler.method.call(handler.methodObj, (this._currTime - handler.dealTime) * this._timeScale);
                 DebugUtils.stop(handler.method.toString());
                 handler.dealTime = this._currTime;
                 handler.exeTime += handler.delay;
-                if(!handler.repeat) {
-                    if(handler.repeatCount > 1) {
+                if (!handler.repeat) {
+                    if (handler.repeatCount > 1) {
                         handler.repeatCount--;
                     } else {
-                        if(handler.complateMethod) {
+                        if (handler.complateMethod) {
                             handler.complateMethod.apply(handler.complateMethodObj);
                         }
                         this._delHandlers.push(handler);
@@ -62,21 +69,21 @@ class TimerManager {
                 }
             }
         }
-        while(this._delHandlers.length) {
+        while (this._delHandlers.length) {
             var handler: TimerHandler = this._delHandlers.pop();
-            this.remove(handler.method,handler.methodObj);
+            this.remove(handler.method, handler.methodObj);
         }
         DebugUtils.stop("TimerManager:");
     }
 
-    private static create(useFrame: boolean,delay: number,repeatCount: number,method: Function,methodObj: any,complateMethod: Function,complateMethodObj: any): void {
+    private static create(useFrame: boolean, delay: number, repeatCount: number, method: Function, methodObj: any, complateMethod: Function, complateMethodObj: any): void {
         //参数监测
-        if(delay < 0 || repeatCount < 0 || method == null) {
+        if (delay < 0 || repeatCount < 0 || method == null) {
             return;
         }
 
         //先删除相同函数的计时
-        this.remove(method,methodObj);
+        this.remove(method, methodObj);
 
         //创建
         var handler: TimerHandler = ObjectPool.pop("TimerHandler");
@@ -105,8 +112,8 @@ class TimerManager {
      * @param complateMethodObj 完成执行函数所属对象
      *
      */
-    public static doTimer(delay: number,repeatCount: number,method: Function,methodObj: any,complateMethod: Function = null,complateMethodObj: any = null): void {
-        this.create(false,delay,repeatCount,method,methodObj,complateMethod,complateMethodObj);
+    public static doTimer(delay: number, repeatCount: number, method: Function, methodObj: any, complateMethod: Function = null, complateMethodObj: any = null): void {
+        this.create(false, delay, repeatCount, method, methodObj, complateMethod, complateMethodObj);
     }
 
     /**
@@ -120,8 +127,8 @@ class TimerManager {
      * @param complateMethodObj 完成执行函数所属对象
      *
      */
-    public static doFrame(delay: number,repeatCount: number,method: Function,methodObj: any,complateMethod: Function = null,complateMethodObj: any = null): void {
-        this.create(true,delay,repeatCount,method,methodObj,complateMethod,complateMethodObj);
+    public static doFrame(delay: number, repeatCount: number, method: Function, methodObj: any, complateMethod: Function = null, complateMethodObj: any = null): void {
+        this.create(true, delay, repeatCount, method, methodObj, complateMethod, complateMethodObj);
     }
 
     /**
@@ -138,11 +145,11 @@ class TimerManager {
      * @param method 要移除的函数
      * @param methodObj 要移除的函数对应的对象
      */
-    public static remove(method: Function,methodObj: any): void {
-        for(var i: number = 0;i < this._count;i++) {
+    public static remove(method: Function, methodObj: any): void {
+        for (var i: number = 0; i < this._count; i++) {
             var handler: TimerHandler = this._handlers[i];
-            if(handler.method == method && handler.methodObj == methodObj) {
-                this._handlers.splice(i,1);
+            if (handler.method == method && handler.methodObj == methodObj) {
+                this._handlers.splice(i, 1);
                 ObjectPool.push(handler);
                 this._count--;
                 break;
@@ -155,10 +162,10 @@ class TimerManager {
      * @param methodObj 要移除的函数对应的对象
      */
     public static removeAll(methodObj: any): void {
-        for(var i: number = 0;i < this._count;i++) {
+        for (var i: number = 0; i < this._count; i++) {
             var handler: TimerHandler = this._handlers[i];
-            if(handler.methodObj == methodObj) {
-                this._handlers.splice(i,1);
+            if (handler.methodObj == methodObj) {
+                this._handlers.splice(i, 1);
                 ObjectPool.push(handler);
                 this._count--;
                 i--;
@@ -172,10 +179,10 @@ class TimerManager {
      * @param methodObj
      *
      */
-    public static isExists(method: Function,methodObj: any): boolean {
-        for(var i: number = 0;i < this._count;i++) {
+    public static isExists(method: Function, methodObj: any): boolean {
+        for (var i: number = 0; i < this._count; i++) {
             var handler: TimerHandler = this._handlers[i];
-            if(handler.method == method && handler.methodObj == methodObj) {
+            if (handler.method == method && handler.methodObj == methodObj) {
                 return true;
             }
         }
@@ -212,4 +219,5 @@ class TimerHandler {
         this.methodObj = null;
         this.complateMethod = null;
         this.complateMethodObj = null;
-    } }
+    }
+}

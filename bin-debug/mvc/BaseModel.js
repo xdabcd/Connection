@@ -11,8 +11,36 @@ var BaseModel = (function () {
     function BaseModel($controller) {
         this._controller = $controller;
         this._controller.setModel(this);
+        this._handles = [];
+        this._time = 0;
+        TimerManager.doFrame(1, 0, this.update, this);
     }
     var d = __define,c=BaseModel,p=c.prototype;
+    /**
+     * 更新
+     */
+    p.update = function (delta) {
+        this._time += delta;
+        var delArr = [];
+        for (var i = 0; i < this._handles.length; i++) {
+            if (this._time > this._handles[i].execTime) {
+                this._handles[i].func();
+                delArr.push(this._handles[i]);
+            }
+        }
+        for (var i = 0; i < delArr.length; i++) {
+            ArrayUtils.remove(this._handles, delArr[i]);
+        }
+    };
+    /**
+     * 延时执行
+     */
+    p.setTimeout = function (delay, func) {
+        this._handles.push({
+            execTime: delay + this._time,
+            func: func
+        });
+    };
     /**
      * 触发本模块消息
      * @param key 唯一标识

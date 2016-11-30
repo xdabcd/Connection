@@ -16,6 +16,8 @@ var GridController = (function (_super) {
         /** M->V */
         this.registerFunc(GridCmd.TILE_CREATE, this.createTile, this);
         this.registerFunc(GridCmd.TILE_REMOVE, this.removeTile, this);
+        this.registerFunc(GridCmd.TILE_HIT, this.hitTile, this);
+        this.registerFunc(GridCmd.TILE_SHAKE, this.shakeTile, this);
         this.registerFunc(GridCmd.TILE_SIGN, this.signTiles, this);
         this.registerFunc(GridCmd.TILE_CONNECT, this.connectTile, this);
         this.registerFunc(GridCmd.TILE_SELECT, this.selectTile, this);
@@ -54,6 +56,18 @@ var GridController = (function (_super) {
      */
     p.removeTile = function (tileData, duration) {
         this.scene.removeTile(tileData, duration);
+    };
+    /**
+     * 击中格子
+     */
+    p.hitTile = function (tileData, duration, direction) {
+        this.scene.hitTile(tileData, duration, direction);
+    };
+    /**
+     * 震动格子
+     */
+    p.shakeTile = function (tileData, src) {
+        this.scene.shakeTile(tileData, src);
     };
     /**
      * 标记

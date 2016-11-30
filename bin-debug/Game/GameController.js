@@ -9,8 +9,15 @@ var GameController = (function (_super) {
         _super.call(this, scene);
         this._model = new GameModel(this);
         ControllerManager.instance.register(ControllerID.Game, this);
+        this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
     }
     var d = __define,c=GameController,p=c.prototype;
+    /**
+     * 添加得分
+     */
+    p.addScore = function (score, pos, type) {
+        this.scene.showScore(score, pos, type);
+    };
     d(p, "model"
         /**
          * 数据

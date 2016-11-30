@@ -4,5 +4,8 @@
  * 
  */
 class GameModel extends BaseModel {
-	
+    private _score: number;
+    private _times: number;
+    
+    
 }

@@ -27,13 +27,21 @@ class TweenManager {
     public static remove(tween: Tween) {
         ArrayUtils.remove(this.tweens, tween);
     }
+
+    public static removeTween(obj: egret.DisplayObject) {
+        for (let i = 0; i < this.tweens.length; i++) {
+            if (this.tweens[i].obj.hashCode == obj.hashCode) {
+                this.tweens[i].stop();
+            }
+        }
+    }
 }
 
 /**
  * 缓动
  */
 class Tween {
-    public obj: any;
+    public obj: egret.DisplayObject;
     public from: any;
     public to: any;
     public duration: number;
@@ -41,15 +49,26 @@ class Tween {
     public ease: Function;
     public callBack: Function;
     public updateFunc: Function;
+    public loop: boolean;
     private time: number;
 
-    public constructor(obj: any) {
+    public constructor(obj: egret.DisplayObject, template: Tween = null) {
         this.obj = obj;
-        this.from = {};
-        this.to = {};
-        this.duration = 0;
-        this.delay = 0
-        this.ease = TweenEase.Linear;
+        if (template) {
+            this.from = template.from;
+            this.to = template.to;
+            this.duration = template.duration;
+            this.delay = template.delay;
+            this.ease = template.ease;
+            this.loop = template.loop;
+        } else {
+            this.from = {};
+            this.to = {};
+            this.duration = 0;
+            this.delay = 0
+            this.ease = TweenEase.Linear;
+            this.loop = false;
+        }
     }
 
     public start() {
@@ -84,13 +103,24 @@ class Tween {
     }
 
     public update(delta: number) {
+        if (this.obj.parent == null) {
+            this.stop();
+            return;
+        }
+
         var flag = this.time <= this.delay;
         this.time += delta;
         var p = (this.time - this.delay) / this.duration;
         if (p > 0) {
             if (p >= 1) {
+                this.time -= this.duration;
+                if (!this.loop) {
+                    this.stop();
+                }
                 this.end();
-                this.stop();
+                if (this.loop) {
+                    this.begin();
+                }
                 return;
             }
 

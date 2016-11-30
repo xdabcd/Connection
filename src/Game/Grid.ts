@@ -12,11 +12,23 @@ class Grid extends BaseScene {
 	private _gridCon: egret.DisplayObjectContainer;
 	private _arrowCon: egret.DisplayObjectContainer;
 	private _tileCon: egret.DisplayObjectContainer;
+	private _fxCon: egret.DisplayObjectContainer;
+	private _hitCon: egret.DisplayObjectContainer;
 	private _arrows: Array<Arrow>;
 
 	public constructor() {
         super();
         this._controller = new GridController(this);
+		KeyboardUtils.addKeyUp((key) => {
+			if (key == Keyboard.SPACE) {
+				TimerManager.setTimeScale(1);
+			}
+		}, this);
+		KeyboardUtils.addKeyDown((key) => {
+			if (key == Keyboard.SPACE) {
+				TimerManager.setTimeScale(0.2);
+			}
+		}, this);
     }
 
     /**
@@ -38,6 +50,8 @@ class Grid extends BaseScene {
 		this._arrows = [];
 
         this.addChild(this._tileCon = new egret.DisplayObjectContainer);
+		this.addChild(this._fxCon = new egret.DisplayObjectContainer);
+		this.addChild(this._hitCon = new egret.DisplayObjectContainer);
 
 		this.addChild(this._border1);
 		this.addChild(this._border2);
@@ -97,7 +111,35 @@ class Grid extends BaseScene {
 	public removeTile(tileData: TileData, duration: number) {
 		var tile = this.findTile(tileData.pos);
 		if (tile) {
+			if (tileData.effect != TileEffect.NONE) {
+				this.addEffect(tileData.effect, tile.x, tile.y);
+			} else {
+				this.addRemoveFx(tileData.removeFx, tile.x, tile.y);
+			}
 			tile.remove(duration);
+		}
+	}
+
+	/**
+	 * 击中格子
+	 */
+	public hitTile(tileData: TileData, duration: number, direction: Direction) {
+		var tile = this.findTile(tileData.pos);
+		if (tile) {
+			this._tileCon.removeChild(tile);
+			this._hitCon.addChild(tile);
+			tile.hit(direction, duration);
+		}
+	}
+
+	/**
+	 * 震动格子
+	 */
+	public shakeTile(tileData: TileData, src: TileData) {
+		var tile1 = this.findTile(tileData.pos);
+		var tile2 = this.findTile(src.pos);
+		if (tile1 && tile2) {
+			tile1.shake(tile2.x, tile2.y);
 		}
 	}
 
@@ -190,6 +232,55 @@ class Grid extends BaseScene {
 	}
 
 	/**
+	 * 添加消失特效
+	 */
+	public addRemoveFx(removeFx: TileRemoveFx, x: number, y: number) {
+		var fx: Fx;
+		switch (removeFx) {
+			case TileRemoveFx.Smoke:
+				fx = ObjectPool.pop("SmokeFx") as SmokeFx;
+				break;
+			case TileRemoveFx.Thunder:
+				fx = ObjectPool.pop("ThunderFx") as ThunderFx;
+				break;
+		}
+		fx.x = x;
+		fx.y = y;
+		this._fxCon.addChild(fx);
+		fx.play();
+	}
+
+	/**
+	 * 添加效果
+	 */
+	public addEffect(effect: TileEffect, x: number, y: number) {
+		var fx: Fx;
+		switch (effect) {
+			case TileEffect.BOMB:
+				fx = ObjectPool.pop("BombFx") as BombFx;
+				break;
+			case TileEffect.CROSS:
+				fx = ObjectPool.pop("WaterFx") as WaterFx;
+				break;
+			case TileEffect.KIND:
+				fx = ObjectPool.pop("ThunderFx") as ThunderFx;
+				break;
+			case TileEffect.RANDOM:
+				fx = ObjectPool.pop("StormFx") as StormFx;
+				let tr = this.getTruePosition(0, this.hor);
+				x = tr.x;
+				y = tr.y + 60;
+				break;
+		}
+		if (fx) {
+			fx.x = x;
+			fx.y = y;
+			this._fxCon.addChild(fx);
+			fx.play();
+		}
+	}
+
+	/**
 	 * 添加箭头
 	 */
 	public addArrow(x1: number, y1: number, x2: number, y2: number) {
@@ -244,6 +335,16 @@ class Grid extends BaseScene {
 		var x = this.width / 2 + this.tileSize * (x - this.hor / 2 + 1 / 2);
 		var y = this.tileSize * (y + 1 / 2) + this.top;
 		return new Vector2(x, y);
+	}
+
+	/**
+	 * 获取绝对位置
+	 */
+	public getAbsPosition(x: number, y: number) {
+		var pos = this.getTruePosition(x, y);
+		pos.x += this.x - this.anchorOffsetX;
+		pos.y += this.y - this.anchorOffsetY;
+		return pos;
 	}
 
 	private get hor(): number {

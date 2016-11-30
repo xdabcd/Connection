@@ -6775,7 +6775,7 @@ declare namespace egret {
          * @version Egret 2.4
          * @platform Web,Native
          */
-        addCallback(functionName: string, listener: (value) => void): void;
+        addCallback(functionName: string, listener: (value: string) => void): void;
     };
 }
 declare namespace egret {
@@ -9329,16 +9329,6 @@ declare namespace egret.sys {
         $render(triggerByFrame: boolean, costTicker: number): void;
         /**
          * @private
-         *
-         */
-        private callLaters();
-        /**
-         * @private
-         *
-         */
-        private callLaterAsyncs();
-        /**
-         * @private
          * 更新舞台尺寸
          * @param stageWidth 舞台宽度（以像素为单位）
          * @param stageHeight 舞台高度（以像素为单位）
@@ -9360,7 +9350,7 @@ declare namespace egret.sys {
         /**
          * @private
          */
-        private fpsDisplay;
+        private fps;
         /**
          * @private
          * 是否显示脏矩形重绘区。
@@ -10009,6 +9999,14 @@ declare namespace egret.sys {
          * 广播Render事件。
          */
         private broadcastRender();
+        /**
+         * @private
+         */
+        private callLaters();
+        /**
+         * @private
+         */
+        private callLaterAsyncs();
     }
     /**
      * @private
@@ -14288,6 +14286,34 @@ declare namespace egret {
          */
         private stringToCodePoints(string);
     }
+}
+declare namespace egret {
+    /**
+     * @private
+     */
+    let fontMapping: {};
+    /**
+     * 兼容旧版本不使用 fontMapping 的情况
+     * @private
+     */
+    let useFontMapping: boolean;
+    /**
+     * @language en_US
+     * Register font mapping.
+     * @param fontFamily The font family name to register.
+     * @param value The font value.
+     * @version Egret 3.2.3
+     * @platform Native
+     */
+    /**
+     * @language zh_CN
+     * 注册字体映射
+     * @param fontFamily 要注册的字体名称
+     * @param value 注册的字体值
+     * @version Egret 3.2.3
+     * @platform Native
+     */
+    function registerFontMapping(fontFamily: string, value: string): void;
 }
 declare namespace egret {
     /**

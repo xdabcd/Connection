@@ -14,6 +14,7 @@ var EgretExpandManager = (function () {
         AnchorUtils.init();
         TimerManager.init();
         TweenManager.init();
+        KeyboardUtils.init();
     };
     return EgretExpandManager;
 }());

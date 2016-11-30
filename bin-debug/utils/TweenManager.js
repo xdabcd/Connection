@@ -24,6 +24,13 @@ var TweenManager = (function () {
     TweenManager.remove = function (tween) {
         ArrayUtils.remove(this.tweens, tween);
     };
+    TweenManager.removeTween = function (obj) {
+        for (var i = 0; i < this.tweens.length; i++) {
+            if (this.tweens[i].obj.hashCode == obj.hashCode) {
+                this.tweens[i].stop();
+            }
+        }
+    };
     return TweenManager;
 }());
 egret.registerClass(TweenManager,'TweenManager');
@@ -31,13 +38,25 @@ egret.registerClass(TweenManager,'TweenManager');
  * 缓动
  */
 var Tween = (function () {
-    function Tween(obj) {
+    function Tween(obj, template) {
+        if (template === void 0) { template = null; }
         this.obj = obj;
-        this.from = {};
-        this.to = {};
-        this.duration = 0;
-        this.delay = 0;
-        this.ease = TweenEase.Linear;
+        if (template) {
+            this.from = template.from;
+            this.to = template.to;
+            this.duration = template.duration;
+            this.delay = template.delay;
+            this.ease = template.ease;
+            this.loop = template.loop;
+        }
+        else {
+            this.from = {};
+            this.to = {};
+            this.duration = 0;
+            this.delay = 0;
+            this.ease = TweenEase.Linear;
+            this.loop = false;
+        }
     }
     var d = __define,c=Tween,p=c.prototype;
     p.start = function () {
@@ -68,13 +87,23 @@ var Tween = (function () {
         }
     };
     p.update = function (delta) {
+        if (this.obj.parent == null) {
+            this.stop();
+            return;
+        }
         var flag = this.time <= this.delay;
         this.time += delta;
         var p = (this.time - this.delay) / this.duration;
         if (p > 0) {
             if (p >= 1) {
+                this.time -= this.duration;
+                if (!this.loop) {
+                    this.stop();
+                }
                 this.end();
-                this.stop();
+                if (this.loop) {
+                    this.begin();
+                }
                 return;
             }
             if (flag) {

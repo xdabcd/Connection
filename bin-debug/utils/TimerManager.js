@@ -27,6 +27,12 @@ var TimerManager = (function () {
         this._timeScale = timeScale;
     };
     /**
+     * 获取时间参数
+     */
+    TimerManager.getTimeScale = function () {
+        return this._timeScale;
+    };
+    /**
      * 每帧执行函数
      * @param frameTime
      */

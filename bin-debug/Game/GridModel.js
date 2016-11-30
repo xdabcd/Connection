@@ -7,7 +7,6 @@ var GridModel = (function (_super) {
     __extends(GridModel, _super);
     function GridModel() {
         _super.apply(this, arguments);
-        this._interval = 50;
     }
     var d = __define,c=GridModel,p=c.prototype;
     /**
@@ -65,6 +64,8 @@ var GridModel = (function (_super) {
      * 触摸结束
      */
     p.touchEnd = function () {
+        if (!this.isState(GridState.Select))
+            return;
         for (var i = 0; i < this._selectArr.length; i++) {
             this.unselect(this._selectArr[i]);
         }
@@ -82,19 +83,29 @@ var GridModel = (function (_super) {
     p.remove = function () {
         var _this = this;
         this.setState(GridState.Remove);
-        var removeTime = 0;
+        this._effectCntArr = [];
         var length = this._selectArr.length;
+        var duration = 0;
+        var td;
         for (var i = 0; i < length; i++) {
             var tileData = this._selectArr[i];
+            if (!td && tileData.type > 0) {
+                td = tileData;
+            }
             var x = tileData.pos.x;
             var y = tileData.pos.y;
-            removeTime = this.delTile(x, y);
+            var t = this.delTile(x, y, null, this.removeInterval * i);
+            duration = Math.max(duration, t);
+        }
+        if (td) {
+            var score = GameData.cacuScore(length);
+            this.addScore(score, td.pos, td.type);
         }
         var pos = this._selectArr[length - 1].pos.clone();
-        TimerManager.doTimer(removeTime + this._interval, 1, function () {
+        this.setTimeout(duration + this.interval, function () {
             _this.addEffect(length, pos);
             _this.repair();
-        }, this);
+        });
     };
     /**
      * 生成带有效果的格子
@@ -152,10 +163,10 @@ var GridModel = (function (_super) {
             }
         }
         var moveTime = this.getMaxMoveDuration(moveList);
-        TimerManager.doTimer(moveTime + this._interval, 1, function () {
+        this.setTimeout(moveTime + this.interval, function () {
             _this.updateMovePosition(moveList);
             _this.setState(GridState.Idle);
-        }, this);
+        });
     };
     /**
      * 标记
@@ -173,11 +184,14 @@ var GridModel = (function (_super) {
     p.getSign = function (arr) {
         for (var i = 0; i < arr.length; i++) {
             var posArr = this.getEffect(arr[i]);
+            var f = arr[i].effect == TileEffect.RANDOM;
             for (var j = 0; j < posArr.length; j++) {
                 var t = this.getTile(posArr[j].x, posArr[j].y);
-                if (this._selectArr.indexOf(t) < 0 && this._signArr.indexOf(t) < 0) {
+                if (this._signArr.indexOf(t) < 0) {
                     this._signArr.push(t);
-                    this.getSign([t]);
+                    if (!f) {
+                        this.getSign([t]);
+                    }
                 }
             }
         }
@@ -185,17 +199,112 @@ var GridModel = (function (_super) {
     /**
      * 执行效果
      */
-    p.doEffect = function (tileData) {
-        var posArr = this.getEffect(tileData);
-        for (var i = 0; i < posArr.length; i++) {
-            this.delTile(posArr[i].x, posArr[i].y);
+    p.doEffect = function (tileData, delay) {
+        var _this = this;
+        var effect = tileData.effect;
+        var cnt = 0;
+        if (this._effectCntArr[effect] == null) {
+            this._effectCntArr[effect] = cnt = 1;
         }
+        else {
+            this._effectCntArr[effect] += 1;
+            cnt = this._effectCntArr[effect];
+        }
+        var score = GameData.cacuEffectScore(tileData.effect, cnt);
+        this.setTimeout(delay, function () {
+            _this.addScore(score, tileData.pos, 0);
+        });
+        var duration = 0;
+        var pos = tileData.pos;
+        var posArr = this.getEffect(tileData);
+        posArr.sort(SortUtils.random);
+        var flag1 = (tileData.effect == TileEffect.BOMB || tileData.effect == TileEffect.CROSS);
+        var flag2 = (tileData.effect == TileEffect.RANDOM);
+        var flag3 = (tileData.effect == TileEffect.KIND);
+        for (var i = 0; i < posArr.length; i++) {
+            var p = posArr[i];
+            var direction = void 0;
+            var l = 0;
+            if (flag1) {
+                if (p.y > pos.y) {
+                    direction = Direction.Down;
+                }
+                else if (p.y < pos.y) {
+                    direction = Direction.Up;
+                }
+                else if (p.x > pos.x) {
+                    direction = Direction.Right;
+                }
+                else {
+                    direction = Direction.Left;
+                }
+                l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
+            }
+            else if (flag2) {
+                direction = Direction.Center;
+                l = p.x + 1;
+            }
+            else if (flag3) {
+                l = i + 1;
+                var td = this.getTile(p.x, p.y);
+                if (td) {
+                    td.removeFx = TileRemoveFx.Thunder;
+                }
+            }
+            var t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
+            duration = Math.max(duration, t);
+        }
+        // posArr = [];
+        // var add = (x: number, y: number) => {
+        // 	var pos = new Vector2(x, y);
+        // 	for (let i = 0; i < this._selectArr.length; i++) {
+        // 		if (this._selectArr[i].pos.equalTo(pos)) {
+        // 			return;
+        // 		}
+        // 	}
+        // 	for (let i = 0; i < this._signArr.length; i++) {
+        // 		if (this._signArr[i].pos.equalTo(pos)) {
+        // 			console.log(pos);
+        // 			return;
+        // 		}
+        // 	}
+        // 	console.log("---", pos);
+        // 	posArr.push(pos);
+        // }
+        // let minX = Math.max(0, pos.x - 3);
+        // let maxX = Math.min(this._hor, pos.x + 4);
+        // let minY = Math.max(0, pos.y - 3);
+        // let maxY = Math.min(this._ver, pos.y + 4);
+        // for (let i = minX; i < maxX; i++) {
+        // 	for (let j = minY; j < maxY; j++) {
+        // 		add(i, j);
+        // 	}
+        // }
+        // for (let i = 0; i < posArr.length; i++) {
+        // 	let td = this.getTile(posArr[i].x, posArr[i].y);
+        // 	console.log(posArr[i]);
+        // 	console.log(td);
+        // 	if (td) {
+        // 		this.applyFunc(GridCmd.TILE_SHAKE, td, tileData);
+        // 	}
+        // }
+        return duration;
     };
     /**
      * 获取效果
      */
     p.getEffect = function (tileData) {
+        var _this = this;
         var posArr = [];
+        var add = function (x, y) {
+            var pos = new Vector2(x, y);
+            for (var i = 0; i < _this._selectArr.length; i++) {
+                if (_this._selectArr[i].pos.equalTo(pos)) {
+                    return;
+                }
+            }
+            posArr.push(pos);
+        };
         var x = tileData.pos.x;
         var y = tileData.pos.y;
         var hor = this._hor;
@@ -208,51 +317,67 @@ var GridModel = (function (_super) {
                 var maxY = Math.min(ver, y + 2);
                 for (var i = minX; i < maxX; i++) {
                     for (var j = minY; j < maxY; j++) {
-                        posArr.push(new Vector2(i, j));
+                        add(i, j);
                     }
                 }
                 break;
             case TileEffect.CROSS:
                 for (var i = 0; i < hor; i++) {
-                    posArr.push(new Vector2(i, y));
+                    add(i, y);
                 }
                 for (var i = 0; i < ver; i++) {
-                    posArr.push(new Vector2(x, i));
+                    add(x, i);
                 }
                 break;
             case TileEffect.KIND:
                 var type = this.curSelectType;
+                if (type == 0) {
+                    if (tileData.info) {
+                        type = tileData.info;
+                    }
+                    else {
+                        type = this.randomType();
+                        tileData.info = type;
+                    }
+                }
                 for (var i = 0; i < hor; i++) {
                     for (var j = 0; j < ver; j++) {
                         var td = this.getTile(i, j);
                         if (td && td.type == type)
-                            posArr.push(new Vector2(i, j));
+                            add(i, j);
                     }
                 }
                 break;
             case TileEffect.RANDOM:
                 var arr = [];
-                for (var i = 0; i < hor; i++) {
-                    for (var j = 0; j < ver; j++) {
-                        var td = this.getTile(i, j);
-                        if (td) {
-                            arr.push(td);
+                if (tileData.info) {
+                    arr = tileData.info;
+                }
+                else {
+                    for (var i = 0; i < hor; i++) {
+                        for (var j = 0; j < ver; j++) {
+                            var td = this.getTile(i, j);
+                            if (td) {
+                                arr.push(td);
+                            }
                         }
                     }
+                    arr.sort(SortUtils.random);
+                    tileData.info = arr;
                 }
-                arr.sort(function (a, b) {
-                    var seed = tileData.id;
-                    seed = (seed * 9301 + 49297) % 233280;
-                    var rnd = seed / 233280.0;
-                    return rnd - 0.5;
-                });
                 var l = Math.min(arr.length, 23);
                 for (var i = 0; i < l; i++) {
-                    posArr.push(new Vector2(arr[i].pos.x, arr[i].pos.y));
+                    add(arr[i].pos.x, arr[i].pos.y);
                 }
                 break;
         }
         return posArr;
+    };
+    /**
+     * 获取得分
+     */
+    p.addScore = function (score, pos, type) {
+        this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, score, pos, type);
     };
     /**
      * 初始化格子列表
@@ -266,6 +391,7 @@ var GridModel = (function (_super) {
                 temp.push(this.addTile(x, y));
             }
         }
+        this.setState(GridState.Idle);
     };
     /**
      * 添加格子
@@ -283,14 +409,20 @@ var GridModel = (function (_super) {
     /**
      * 删除格子
      */
-    p.delTile = function (x, y) {
-        var duration = 300;
+    p.delTile = function (x, y, direction, delay) {
+        var duration = delay + this.removeTime;
         var tileData = this.getTile(x, y);
         if (tileData) {
             this._tileList[x][y] = null;
-            this.removeTile(tileData, duration);
-            if (tileData.effect != TileEffect.NONE) {
-                this.doEffect(tileData);
+            if (direction != null && tileData.effect == TileEffect.NONE || direction == Direction.Center) {
+                this.hitTile(tileData, this.removeTime, direction, delay);
+            }
+            else {
+                this.removeTile(tileData, this.removeTime, delay);
+            }
+            if (tileData.effect != TileEffect.NONE && direction != Direction.Center) {
+                var t = this.doEffect(tileData, delay);
+                duration = Math.max(duration, t);
             }
         }
         return duration;
@@ -304,8 +436,22 @@ var GridModel = (function (_super) {
     /**
      * 移除格子
      */
-    p.removeTile = function (tileData, duration) {
-        this.applyFunc(GridCmd.TILE_REMOVE, tileData, duration);
+    p.removeTile = function (tileData, duration, delay) {
+        var _this = this;
+        if (delay === void 0) { delay = 0; }
+        this.setTimeout(delay, function () {
+            _this.applyFunc(GridCmd.TILE_REMOVE, tileData, duration);
+        });
+    };
+    /**
+     * 打击格子
+     */
+    p.hitTile = function (tileData, duration, direction, delay) {
+        var _this = this;
+        if (delay === void 0) { delay = 0; }
+        this.setTimeout(delay, function () {
+            _this.applyFunc(GridCmd.TILE_HIT, tileData, duration, direction);
+        });
     };
     /**
      * 连接格子
@@ -367,7 +513,7 @@ var GridModel = (function (_super) {
      * 计算移动时间
      */
     p.cacuMoveTime = function (src, target) {
-        return Math.abs(src.y - target.y) * 200;
+        return Math.abs(src.y - target.y) * this.moveTime;
     };
     /**
     * 更新移动后的位置
@@ -430,6 +576,46 @@ var GridModel = (function (_super) {
     p.isState = function (state) {
         return this._state == state;
     };
+    d(p, "interval"
+        /**
+         * 操作间隔
+         */
+        ,function () {
+            return 50;
+        }
+    );
+    d(p, "removeTime"
+        /**
+         * 移除所需时间
+         */
+        ,function () {
+            return 300;
+        }
+    );
+    d(p, "moveTime"
+        /**
+         * 移动时间
+         */
+        ,function () {
+            return 200;
+        }
+    );
+    d(p, "removeInterval"
+        /**
+         * 移除间隔
+         */
+        ,function () {
+            return 80;
+        }
+    );
+    d(p, "effectInterval"
+        /**
+         * 效果间隔
+         */
+        ,function () {
+            return 80;
+        }
+    );
     return GridModel;
 }(BaseModel));
 egret.registerClass(GridModel,'GridModel');

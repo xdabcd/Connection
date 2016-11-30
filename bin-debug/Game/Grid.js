@@ -8,6 +8,16 @@ var Grid = (function (_super) {
     function Grid() {
         _super.call(this);
         this._controller = new GridController(this);
+        KeyboardUtils.addKeyUp(function (key) {
+            if (key == Keyboard.SPACE) {
+                TimerManager.setTimeScale(1);
+            }
+        }, this);
+        KeyboardUtils.addKeyDown(function (key) {
+            if (key == Keyboard.SPACE) {
+                TimerManager.setTimeScale(0.2);
+            }
+        }, this);
     }
     var d = __define,c=Grid,p=c.prototype;
     /**
@@ -26,6 +36,8 @@ var Grid = (function (_super) {
         this.addChild(this._arrowCon = new egret.DisplayObjectContainer);
         this._arrows = [];
         this.addChild(this._tileCon = new egret.DisplayObjectContainer);
+        this.addChild(this._fxCon = new egret.DisplayObjectContainer);
+        this.addChild(this._hitCon = new egret.DisplayObjectContainer);
         this.addChild(this._border1);
         this.addChild(this._border2);
         this.addChild(this._bottom);
@@ -81,7 +93,34 @@ var Grid = (function (_super) {
     p.removeTile = function (tileData, duration) {
         var tile = this.findTile(tileData.pos);
         if (tile) {
+            if (tileData.effect != TileEffect.NONE) {
+                this.addEffect(tileData.effect, tile.x, tile.y);
+            }
+            else {
+                this.addRemoveFx(tileData.removeFx, tile.x, tile.y);
+            }
             tile.remove(duration);
+        }
+    };
+    /**
+     * 击中格子
+     */
+    p.hitTile = function (tileData, duration, direction) {
+        var tile = this.findTile(tileData.pos);
+        if (tile) {
+            this._tileCon.removeChild(tile);
+            this._hitCon.addChild(tile);
+            tile.hit(direction, duration);
+        }
+    };
+    /**
+     * 震动格子
+     */
+    p.shakeTile = function (tileData, src) {
+        var tile1 = this.findTile(tileData.pos);
+        var tile2 = this.findTile(src.pos);
+        if (tile1 && tile2) {
+            tile1.shake(tile2.x, tile2.y);
         }
     };
     /**
@@ -165,6 +204,53 @@ var Grid = (function (_super) {
         }
     };
     /**
+     * 添加消失特效
+     */
+    p.addRemoveFx = function (removeFx, x, y) {
+        var fx;
+        switch (removeFx) {
+            case TileRemoveFx.Smoke:
+                fx = ObjectPool.pop("SmokeFx");
+                break;
+            case TileRemoveFx.Thunder:
+                fx = ObjectPool.pop("ThunderFx");
+                break;
+        }
+        fx.x = x;
+        fx.y = y;
+        this._fxCon.addChild(fx);
+        fx.play();
+    };
+    /**
+     * 添加效果
+     */
+    p.addEffect = function (effect, x, y) {
+        var fx;
+        switch (effect) {
+            case TileEffect.BOMB:
+                fx = ObjectPool.pop("BombFx");
+                break;
+            case TileEffect.CROSS:
+                fx = ObjectPool.pop("WaterFx");
+                break;
+            case TileEffect.KIND:
+                fx = ObjectPool.pop("ThunderFx");
+                break;
+            case TileEffect.RANDOM:
+                fx = ObjectPool.pop("StormFx");
+                var tr = this.getTruePosition(0, this.hor);
+                x = tr.x;
+                y = tr.y + 60;
+                break;
+        }
+        if (fx) {
+            fx.x = x;
+            fx.y = y;
+            this._fxCon.addChild(fx);
+            fx.play();
+        }
+    };
+    /**
      * 添加箭头
      */
     p.addArrow = function (x1, y1, x2, y2) {
@@ -214,6 +300,15 @@ var Grid = (function (_super) {
         var x = this.width / 2 + this.tileSize * (x - this.hor / 2 + 1 / 2);
         var y = this.tileSize * (y + 1 / 2) + this.top;
         return new Vector2(x, y);
+    };
+    /**
+     * 获取绝对位置
+     */
+    p.getAbsPosition = function (x, y) {
+        var pos = this.getTruePosition(x, y);
+        pos.x += this.x - this.anchorOffsetX;
+        pos.y += this.y - this.anchorOffsetY;
+        return pos;
     };
     d(p, "hor"
         ,function () {

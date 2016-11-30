@@ -9,6 +9,8 @@ class GridCmd {
 
 	public static TILE_CREATE: string = "tile_create";
 	public static TILE_REMOVE: string = "tile_remove";
+	public static TILE_HIT: string = "tile_hit";
+	public static TILE_SHAKE: string = "tile_shake";
 	public static TILE_SIGN: string = "tile_sign";
 	public static TILE_CONNECT: string = "tile_connect";
 	public static TILE_SELECT: string = "tile_select";

@@ -11,5 +11,6 @@ class EgretExpandManager {
         AnchorUtils.init();
         TimerManager.init();
         TweenManager.init();
+        KeyboardUtils.init();
     }
 }
