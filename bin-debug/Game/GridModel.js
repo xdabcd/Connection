@@ -18,6 +18,7 @@ var GridModel = (function (_super) {
         this._ver = GameData.ver;
         this._selectArr = [];
         this.initTileList();
+        this.repair();
     };
     /**
      * 触摸格子
@@ -84,6 +85,7 @@ var GridModel = (function (_super) {
         var _this = this;
         this.setState(GridState.Remove);
         this._effectCntArr = [];
+        this._isShake = false;
         var length = this._selectArr.length;
         var duration = 0;
         var td;
@@ -139,7 +141,7 @@ var GridModel = (function (_super) {
             var temp = [];
             removeArr.push(temp);
             for (var y = 0; y < this._ver; y++) {
-                if (this._tileList[x][y] == null) {
+                if (!this.getTile(x, y)) {
                     temp.push(y);
                 }
             }
@@ -238,7 +240,7 @@ var GridModel = (function (_super) {
                 else {
                     direction = Direction.Left;
                 }
-                l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
+                l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y)) - 1;
             }
             else if (flag2) {
                 direction = Direction.Center;
@@ -254,41 +256,74 @@ var GridModel = (function (_super) {
             var t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
             duration = Math.max(duration, t);
         }
-        // posArr = [];
-        // var add = (x: number, y: number) => {
-        // 	var pos = new Vector2(x, y);
-        // 	for (let i = 0; i < this._selectArr.length; i++) {
-        // 		if (this._selectArr[i].pos.equalTo(pos)) {
-        // 			return;
-        // 		}
-        // 	}
-        // 	for (let i = 0; i < this._signArr.length; i++) {
-        // 		if (this._signArr[i].pos.equalTo(pos)) {
-        // 			console.log(pos);
-        // 			return;
-        // 		}
-        // 	}
-        // 	console.log("---", pos);
-        // 	posArr.push(pos);
-        // }
-        // let minX = Math.max(0, pos.x - 3);
-        // let maxX = Math.min(this._hor, pos.x + 4);
-        // let minY = Math.max(0, pos.y - 3);
-        // let maxY = Math.min(this._ver, pos.y + 4);
-        // for (let i = minX; i < maxX; i++) {
-        // 	for (let j = minY; j < maxY; j++) {
-        // 		add(i, j);
-        // 	}
-        // }
-        // for (let i = 0; i < posArr.length; i++) {
-        // 	let td = this.getTile(posArr[i].x, posArr[i].y);
-        // 	console.log(posArr[i]);
-        // 	console.log(td);
-        // 	if (td) {
-        // 		this.applyFunc(GridCmd.TILE_SHAKE, td, tileData);
-        // 	}
-        // }
+        this.shake(tileData, delay);
         return duration;
+    };
+    /**
+     * 震动
+     */
+    p.shake = function (tileData, delay) {
+        var _this = this;
+        var pos = tileData.pos;
+        var posArr = [];
+        var hor = this._hor;
+        var ver = this._ver;
+        var add = function (x, y) {
+            var pos = new Vector2(x, y);
+            for (var i = 0; i < _this._selectArr.length; i++) {
+                if (_this._selectArr[i].pos.equalTo(pos)) {
+                    return;
+                }
+            }
+            for (var i = 0; i < _this._signArr.length; i++) {
+                if (_this._signArr[i].pos.equalTo(pos)) {
+                    return;
+                }
+            }
+            posArr.push(pos);
+        };
+        if (tileData.effect == TileEffect.BOMB) {
+            var minX = Math.max(0, pos.x - 3);
+            var maxX = Math.min(hor, pos.x + 4);
+            var minY = Math.max(0, pos.y - 3);
+            var maxY = Math.min(ver, pos.y + 4);
+            for (var i = minX; i < maxX; i++) {
+                for (var j = minY; j < maxY; j++) {
+                    add(i, j);
+                }
+            }
+            for (var i = 0; i < posArr.length; i++) {
+                var td = this.getTile(posArr[i].x, posArr[i].y);
+                if (td) {
+                    this.shakeTile(td, pos, delay);
+                }
+            }
+        }
+        else if (tileData.effect == TileEffect.CROSS) {
+            var minX = Math.max(0, pos.x - 1);
+            var maxX = Math.min(hor - 1, pos.x + 1);
+            var minY = Math.max(0, pos.y - 1);
+            var maxY = Math.min(ver - 1, pos.y + 1);
+            for (var i = 0; i < hor; i++) {
+                add(i, minY);
+                add(i, maxY);
+            }
+            for (var i = 0; i < ver; i++) {
+                add(minX, i);
+                add(maxX, i);
+            }
+            for (var i = 0; i < posArr.length; i++) {
+                var p = posArr[i];
+                var td = this.getTile(p.x, p.y);
+                var l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
+                var a = Math.max(Math.abs(pos.x - p.x), Math.abs(pos.y - p.y));
+                var sx = (pos.x - p.x) / Math.abs(pos.x - p.x) * a + p.x;
+                var sy = (pos.y - p.y) / Math.abs(pos.y - p.y) * a + p.y;
+                if (td) {
+                    this.shakeTile(td, new Vector2(sx, sy), delay + l * this.effectInterval * 0.7);
+                }
+            }
+        }
     };
     /**
      * 获取效果
@@ -387,11 +422,7 @@ var GridModel = (function (_super) {
         for (var x = 0; x < this._hor; x++) {
             var temp = [];
             this._tileList.push(temp);
-            for (var y = 0; y < this._ver; y++) {
-                temp.push(this.addTile(x, y));
-            }
         }
-        this.setState(GridState.Idle);
     };
     /**
      * 添加格子
@@ -441,6 +472,20 @@ var GridModel = (function (_super) {
         if (delay === void 0) { delay = 0; }
         this.setTimeout(delay, function () {
             _this.applyFunc(GridCmd.TILE_REMOVE, tileData, duration);
+        });
+    };
+    /**
+     * 震动格子
+     */
+    p.shakeTile = function (tileData, src, delay) {
+        var _this = this;
+        if (delay === void 0) { delay = 0; }
+        this.setTimeout(delay, function () {
+            _this.applyFunc(GridCmd.TILE_SHAKE, tileData, src);
+            if (!_this._isShake) {
+                _this.applyFunc(GridCmd.SHAKE);
+                _this._isShake = true;
+            }
         });
     };
     /**
@@ -494,9 +539,12 @@ var GridModel = (function (_super) {
      * 移动格子
      */
     p.moveTile = function (tileData, target) {
+        var _this = this;
         var duration = this.cacuMoveTime(tileData.pos, target);
         var moveInfo = new MoveInfo(tileData, target, duration);
-        this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
+        this.setTimeout(RandomUtils.limit(0, 80), function () {
+            _this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
+        });
         return moveInfo;
     };
     /**
@@ -513,7 +561,7 @@ var GridModel = (function (_super) {
      * 计算移动时间
      */
     p.cacuMoveTime = function (src, target) {
-        return Math.abs(src.y - target.y) * this.moveTime;
+        return Math.sqrt(Math.abs(src.y - target.y)) * this.moveTime;
     };
     /**
     * 更新移动后的位置
@@ -533,7 +581,7 @@ var GridModel = (function (_super) {
      * 获取格子数据
      */
     p.getTile = function (x, y) {
-        return this._tileList[x][y];
+        return this._tileList && this._tileList[x] && this._tileList[x][y];
     };
     /**
      * 随机类型
@@ -597,7 +645,7 @@ var GridModel = (function (_super) {
          * 移动时间
          */
         ,function () {
-            return 200;
+            return 400;
         }
     );
     d(p, "removeInterval"
@@ -605,7 +653,7 @@ var GridModel = (function (_super) {
          * 移除间隔
          */
         ,function () {
-            return 80;
+            return 100;
         }
     );
     d(p, "effectInterval"

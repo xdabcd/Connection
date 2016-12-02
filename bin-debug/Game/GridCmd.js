@@ -20,6 +20,7 @@ var GridCmd = (function () {
     GridCmd.TILE_MOVE = "tile_move";
     GridCmd.TILE_CHANGE_EFFECT = "tile_change_effect";
     GridCmd.TILE_CHANGE_TYPE = "tile_change_type";
+    GridCmd.SHAKE = "shake";
     return GridCmd;
 }());
 egret.registerClass(GridCmd,'GridCmd');

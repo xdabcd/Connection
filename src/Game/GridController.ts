@@ -26,6 +26,8 @@ class GridController extends BaseController {
 		this.registerFunc(GridCmd.TILE_MOVE, this.moveTile, this);
 		this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
 		this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
+
+		this.registerFunc(GridCmd.SHAKE, this.shake, this);
 	}
 
 	/**
@@ -71,9 +73,16 @@ class GridController extends BaseController {
 	}
 
 	/**
+	 * 震动
+	 */
+	public shake() {
+		this.scene.shake();
+	}
+
+	/**
 	 * 震动格子
 	 */
-	public shakeTile(tileData: TileData, src: TileData) {
+	public shakeTile(tileData: TileData, src: Vector2) {
 		this.scene.shakeTile(tileData, src);
 	}
 

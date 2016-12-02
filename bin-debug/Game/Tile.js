@@ -26,6 +26,7 @@ var Tile = (function (_super) {
         this._signIcon.visible = false;
         this._isSelect = false;
         this.touchEnabled = true;
+        this._isShake = false;
     };
     /**
      * 添加触摸
@@ -68,13 +69,27 @@ var Tile = (function (_super) {
      * 选中
      */
     p.select = function (hl) {
+        var _this = this;
         if (!this._isSelect) {
-            var tween = new Tween(this._icon);
-            tween.from = { rotation: 170 };
-            tween.to = { rotation: 0 };
-            tween.ease = TweenEase.QuartOut;
-            tween.duration = 400;
-            tween.start();
+            var duration = 500;
+            var delay = 0;
+            var tw = function (a, t, callBack) {
+                if (callBack === void 0) { callBack = null; }
+                var tw1 = new Tween(_this._icon);
+                tw1.to = {
+                    rotation: a
+                };
+                tw1.duration = t;
+                tw1.delay = delay;
+                tw1.callBack = callBack;
+                tw1.start();
+                delay += t;
+            };
+            this._icon.rotation = 170;
+            tw(10, duration * 0.5);
+            tw(-10, delay * 0.25);
+            tw(5, duration * 0.2);
+            tw(0, duration * 0.05);
         }
         this._isSelect = true;
         if (this._type == 0)
@@ -126,20 +141,20 @@ var Tile = (function (_super) {
         var v;
         switch (direction) {
             case Direction.Left:
-                v = 300;
-                m = -RandomUtils.limit(0.6, 1.1);
+                v = 400;
+                m = -RandomUtils.limit(0.4, 1.05);
                 break;
             case Direction.Right:
-                v = 300;
-                m = RandomUtils.limit(0.6, 1.1);
+                v = 400;
+                m = RandomUtils.limit(0.4, 1.05);
                 break;
             case Direction.Up:
                 v = 600;
-                m = RandomUtils.limit(0.05, 0.15) * (Math.random() > 0.5 ? 1 : -1);
+                m = RandomUtils.limit(0.05, 0.25) * (Math.random() > 0.5 ? 1 : -1);
                 break;
             case Direction.Down:
                 v = 120;
-                m = RandomUtils.limit(2.05, 2.15) * (Math.random() > 0.5 ? 1 : -1);
+                m = RandomUtils.limit(2.05, 2.25) * (Math.random() > 0.5 ? 1 : -1);
                 break;
         }
         var a = Math.PI / 2 * m;
@@ -154,7 +169,7 @@ var Tile = (function (_super) {
             var ay = -vy * t + 1200 * t * t / 2;
             _this.x = x + ax;
             _this.y = y + ay;
-            _this.alpha = 1 - (t - 0.5);
+            _this.alpha = 1 - Math.max((t - 0.5), 0) * 1.4;
             _this.rotation = Math.atan(ay / ax) / Math.PI * 180;
         };
         tween.callBack = function () {
@@ -167,17 +182,38 @@ var Tile = (function (_super) {
      * 震动
      */
     p.shake = function (x, y) {
-        // var d = MathUtils.getDistance(this.x, this.y, x, y);
-        // var r = MathUtils.getRadian2(x, y, this.x, this.y);
-        // var l = 5000 / d;
-        // console.log(l);
-        // var tw = new Tween(this._icon);
-        // tw.to = {
-        //     x: l * Math.sin(r),
-        //     y: l * Math.cos(r)
-        // };
-        // tw.duration = 500;
-        // tw.start();
+        var _this = this;
+        if (this._isShake)
+            return;
+        this._isShake = true;
+        var d = MathUtils.getDistance(this.x, this.y, x, y);
+        var r = MathUtils.getRadian2(x, y, this.x, this.y);
+        var l = 400 / Math.sqrt(d);
+        var duration = 650;
+        var delay = 0;
+        var tw = function (a, t, callBack) {
+            if (callBack === void 0) { callBack = null; }
+            var tw1 = new Tween(_this._icon);
+            tw1.to = {
+                x: l * Math.cos(r) * a,
+                y: l * Math.sin(r) * a
+            };
+            tw1.duration = t;
+            tw1.delay = delay;
+            tw1.callBack = callBack;
+            tw1.start();
+            delay += t;
+        };
+        tw(1, 60);
+        tw(0, duration / 7);
+        tw(-0.7, duration / 7);
+        tw(0, duration / 7);
+        tw(0.4, duration / 7);
+        tw(0, duration / 7);
+        tw(-0.1, duration / 7);
+        tw(0, duration / 7, function () {
+            _this._isShake = false;
+        });
     };
     /**
      * 无效
@@ -191,13 +227,36 @@ var Tile = (function (_super) {
      * 移动
      */
     p.moveTo = function (targetPos, duration, callBack) {
+        var _this = this;
         if (callBack === void 0) { callBack = null; }
-        var tween = new Tween(this);
-        tween.to = { x: targetPos.x, y: targetPos.y };
-        tween.duration = duration;
-        tween.ease = TweenEase.BounceOut;
-        tween.callBack = callBack;
-        tween.start();
+        var tw = new Tween(this);
+        var y = this.y;
+        var speed = 0;
+        var time = 0;
+        var g = 6000;
+        var flag = false;
+        tw.updateFunc = function (t) {
+            if (flag)
+                return;
+            t /= 1000;
+            t -= time;
+            _this.y = speed * t + y + 1 / 2 * g * t * t;
+            if (_this.y >= targetPos.y) {
+                _this.y = targetPos.y;
+                var speed1 = -g * t * 0.32;
+                if (speed1 < -450) {
+                    speed = speed1;
+                    time += t;
+                    y = targetPos.y;
+                }
+                else {
+                    flag = true;
+                }
+            }
+        };
+        tw.duration = duration;
+        tw.callBack = callBack;
+        tw.start();
     };
     d(p, "type",undefined
         /**

@@ -25,6 +25,7 @@ var GridController = (function (_super) {
         this.registerFunc(GridCmd.TILE_MOVE, this.moveTile, this);
         this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
         this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
+        this.registerFunc(GridCmd.SHAKE, this.shake, this);
     }
     var d = __define,c=GridController,p=c.prototype;
     /**
@@ -62,6 +63,12 @@ var GridController = (function (_super) {
      */
     p.hitTile = function (tileData, duration, direction) {
         this.scene.hitTile(tileData, duration, direction);
+    };
+    /**
+     * 震动
+     */
+    p.shake = function () {
+        this.scene.shake();
     };
     /**
      * 震动格子

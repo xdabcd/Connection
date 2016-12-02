@@ -9,6 +9,7 @@ class Grid extends BaseScene {
 	private _border2: egret.Bitmap;
 	private _bottom: egret.Bitmap;
 
+	private _container: egret.DisplayObjectContainer;
 	private _gridCon: egret.DisplayObjectContainer;
 	private _arrowCon: egret.DisplayObjectContainer;
 	private _tileCon: egret.DisplayObjectContainer;
@@ -26,7 +27,7 @@ class Grid extends BaseScene {
 		}, this);
 		KeyboardUtils.addKeyDown((key) => {
 			if (key == Keyboard.SPACE) {
-				TimerManager.setTimeScale(0.2);
+				TimerManager.setTimeScale(0.1);
 			}
 		}, this);
     }
@@ -37,22 +38,13 @@ class Grid extends BaseScene {
     protected init() {
 		super.init();
 		this.addChild(this._bg = DisplayUtils.createBitmap("grid_bg_png"));
+		this.addChild(this._container = new egret.DisplayObjectContainer);
+
 		this._border1 = DisplayUtils.createBitmap("grid_border_1_png");
 		this._border2 = DisplayUtils.createBitmap("grid_border_2_png");
 		this._bottom = DisplayUtils.createBitmap("grid_bottom_png");
 		this.width = this._bg.width = this._border1.width + this._border2.width + 640;
 		this.height = this._bg.height = this._border1.height;
-
-		this.addChild(this._gridCon = new egret.DisplayObjectContainer);
-		this.initGrid();
-
-		this.addChild(this._arrowCon = new egret.DisplayObjectContainer);
-		this._arrows = [];
-
-        this.addChild(this._tileCon = new egret.DisplayObjectContainer);
-		this.addChild(this._fxCon = new egret.DisplayObjectContainer);
-		this.addChild(this._hitCon = new egret.DisplayObjectContainer);
-
 		this.addChild(this._border1);
 		this.addChild(this._border2);
 		this.addChild(this._bottom);
@@ -63,6 +55,17 @@ class Grid extends BaseScene {
 		AnchorUtils.setAnchorY(this._bottom, 1);
 		this._bottom.x = this.width / 2;
 		this._bottom.y = this.height;
+
+
+		this._container.addChild(this._gridCon = new egret.DisplayObjectContainer);
+		this.initGrid();
+
+		this._container.addChild(this._arrowCon = new egret.DisplayObjectContainer);
+		this._arrows = [];
+
+        this._container.addChild(this._tileCon = new egret.DisplayObjectContainer);
+		this._container.addChild(this._fxCon = new egret.DisplayObjectContainer);
+		this._container.addChild(this._hitCon = new egret.DisplayObjectContainer);
 
 		this.touchEnabled = true;
        	this.stage.addEventListener(egret.TouchEvent.TOUCH_END, this.onEnd, this);
@@ -133,13 +136,48 @@ class Grid extends BaseScene {
 	}
 
 	/**
+	 * 震动
+	 */
+	public shake() {
+		var t = 30;
+		var tw1 = new Tween(this._gridCon);
+		tw1.to = { y: 1 };
+		tw1.duration = t;
+		tw1.start();
+		var tw2 = new Tween(this._gridCon);
+		tw2.to = { y: 0 };
+		tw2.duration = t * 2;
+		tw2.delay = tw1.duration;
+		tw2.start();
+		var tw3 = new Tween(this._container);
+		tw3.to = { y: -1 };
+		tw3.duration = t;
+		tw3.start();
+		var tw4 = new Tween(this._container);
+		tw4.to = { y: 3 };
+		tw4.duration = t * 2;
+		tw4.delay = tw3.duration;
+		tw4.start();
+		var tw5 = new Tween(this._container);
+		tw5.to = { y: -3 };
+		tw5.duration = t * 2.5;
+		tw5.delay = tw4.duration + tw4.delay + t;
+		tw5.start();
+		var tw6 = new Tween(this._container);
+		tw6.to = { y: 0 };
+		tw6.duration = t;
+		tw6.delay = tw5.duration + tw5.delay + t * 2;
+		tw6.start();
+	}
+
+	/**
 	 * 震动格子
 	 */
-	public shakeTile(tileData: TileData, src: TileData) {
-		var tile1 = this.findTile(tileData.pos);
-		var tile2 = this.findTile(src.pos);
-		if (tile1 && tile2) {
-			tile1.shake(tile2.x, tile2.y);
+	public shakeTile(tileData: TileData, src: Vector2) {
+		var tile = this.findTile(tileData.pos);
+		var pos = this.getTruePosition(src.x, src.y);
+		if (tile) {
+			tile.shake(pos.x, pos.y);
 		}
 	}
 

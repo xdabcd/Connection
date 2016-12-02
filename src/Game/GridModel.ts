@@ -11,6 +11,7 @@ class GridModel extends BaseModel {
 	private _selectArr: Array<TileData>;
 	private _signArr: Array<TileData>;
 	private _effectCntArr: Array<number>;
+	private _isShake: boolean;
 
 	/**
 	 * 开始
@@ -21,6 +22,7 @@ class GridModel extends BaseModel {
 		this._ver = GameData.ver;
 		this._selectArr = [];
 		this.initTileList();
+		this.repair();
 	}
 
 	/**
@@ -86,6 +88,7 @@ class GridModel extends BaseModel {
 	private remove() {
 		this.setState(GridState.Remove);
 		this._effectCntArr = [];
+		this._isShake = false;
 		var length = this._selectArr.length;
 		var duration = 0;
 		var td;
@@ -140,7 +143,7 @@ class GridModel extends BaseModel {
 			let temp = [];
 			removeArr.push(temp);
 			for (let y: number = 0; y < this._ver; y++) {
-				if (this._tileList[x][y] == null) {
+				if (!this.getTile(x, y)) {
 					temp.push(y);
 				}
 			}
@@ -239,7 +242,7 @@ class GridModel extends BaseModel {
 				} else {
 					direction = Direction.Left;
 				}
-				l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
+				l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y)) - 1;
 			} else if (flag2) {
 				direction = Direction.Center;
 				l = p.x + 1;
@@ -254,42 +257,75 @@ class GridModel extends BaseModel {
 			let t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
 			duration = Math.max(duration, t);
 		}
+		this.shake(tileData, delay);
 
-		// posArr = [];
-		// var add = (x: number, y: number) => {
-		// 	var pos = new Vector2(x, y);
-		// 	for (let i = 0; i < this._selectArr.length; i++) {
-		// 		if (this._selectArr[i].pos.equalTo(pos)) {
-		// 			return;
-		// 		}
-		// 	}
-		// 	for (let i = 0; i < this._signArr.length; i++) {
-		// 		if (this._signArr[i].pos.equalTo(pos)) {
-		// 			console.log(pos);
-		// 			return;
-		// 		}
-		// 	}
-		// 	console.log("---", pos);
-		// 	posArr.push(pos);
-		// }
-		// let minX = Math.max(0, pos.x - 3);
-		// let maxX = Math.min(this._hor, pos.x + 4);
-		// let minY = Math.max(0, pos.y - 3);
-		// let maxY = Math.min(this._ver, pos.y + 4);
-		// for (let i = minX; i < maxX; i++) {
-		// 	for (let j = minY; j < maxY; j++) {
-		// 		add(i, j);
-		// 	}
-		// }
-		// for (let i = 0; i < posArr.length; i++) {
-		// 	let td = this.getTile(posArr[i].x, posArr[i].y);
-		// 	console.log(posArr[i]);
-		// 	console.log(td);
-		// 	if (td) {
-		// 		this.applyFunc(GridCmd.TILE_SHAKE, td, tileData);
-		// 	}
-		// }
 		return duration;
+	}
+
+	/**
+	 * 震动
+	 */
+	private shake(tileData: TileData, delay: number) {
+		var pos = tileData.pos;
+		var posArr = [];
+		var hor = this._hor;
+		var ver = this._ver;
+		var add = (x: number, y: number) => {
+			var pos = new Vector2(x, y);
+			for (let i = 0; i < this._selectArr.length; i++) {
+				if (this._selectArr[i].pos.equalTo(pos)) {
+					return;
+				}
+			}
+			for (let i = 0; i < this._signArr.length; i++) {
+				if (this._signArr[i].pos.equalTo(pos)) {
+					return;
+				}
+			}
+			posArr.push(pos);
+		}
+		if (tileData.effect == TileEffect.BOMB) {
+			let minX = Math.max(0, pos.x - 3);
+			let maxX = Math.min(hor, pos.x + 4);
+			let minY = Math.max(0, pos.y - 3);
+			let maxY = Math.min(ver, pos.y + 4);
+			for (let i = minX; i < maxX; i++) {
+				for (let j = minY; j < maxY; j++) {
+					add(i, j);
+				}
+			}
+			for (let i = 0; i < posArr.length; i++) {
+				let td = this.getTile(posArr[i].x, posArr[i].y);
+				if (td) {
+					this.shakeTile(td, pos, delay);
+				}
+			}
+		} else if (tileData.effect == TileEffect.CROSS) {
+			let minX = Math.max(0, pos.x - 1);
+			let maxX = Math.min(hor - 1, pos.x + 1);
+			let minY = Math.max(0, pos.y - 1);
+			let maxY = Math.min(ver - 1, pos.y + 1);
+			for (let i = 0; i < hor; i++) {
+				add(i, minY);
+				add(i, maxY);
+			}
+			for (let i = 0; i < ver; i++) {
+				add(minX, i);
+				add(maxX, i);
+			}
+			for (let i = 0; i < posArr.length; i++) {
+				let p = posArr[i];
+				let td = this.getTile(p.x, p.y);
+				let l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
+				var a = Math.max(Math.abs(pos.x - p.x), Math.abs(pos.y - p.y));
+				let sx = (pos.x - p.x) / Math.abs(pos.x - p.x) * a + p.x;
+				let sy = (pos.y - p.y) / Math.abs(pos.y - p.y) * a + p.y;
+				if (td) {
+					this.shakeTile(td, new Vector2(sx, sy), delay + l * this.effectInterval * 0.7);
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -388,11 +424,10 @@ class GridModel extends BaseModel {
 		for (var x: number = 0; x < this._hor; x++) {
 			var temp = [];
 			this._tileList.push(temp);
-			for (var y: number = 0; y < this._ver; y++) {
-				temp.push(this.addTile(x, y));
-			}
+			// for (var y: number = 0; y < this._ver; y++) {
+			// 	temp.push(this.addTile(x, y));
+			// }
 		}
-		this.setState(GridState.Idle);
 	}
 
 	/**
@@ -442,6 +477,20 @@ class GridModel extends BaseModel {
 	private removeTile(tileData: TileData, duration: number, delay: number = 0): void {
 		this.setTimeout(delay, () => {
 			this.applyFunc(GridCmd.TILE_REMOVE, tileData, duration);
+		});
+
+	}
+
+	/**
+	 * 震动格子
+	 */
+	private shakeTile(tileData: TileData, src: Vector2, delay: number = 0): void {
+		this.setTimeout(delay, () => {
+			this.applyFunc(GridCmd.TILE_SHAKE, tileData, src);
+			if(!this._isShake){
+				this.applyFunc(GridCmd.SHAKE);
+				this._isShake = true;
+			}
 		});
 
 	}
@@ -506,7 +555,9 @@ class GridModel extends BaseModel {
 	private moveTile(tileData: TileData, target: Vector2): MoveInfo {
 		var duration = this.cacuMoveTime(tileData.pos, target);
 		var moveInfo = new MoveInfo(tileData, target, duration);
-		this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
+		this.setTimeout(RandomUtils.limit(0, 80), () => {
+			this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
+		})
 		return moveInfo;
 	}
 
@@ -526,7 +577,7 @@ class GridModel extends BaseModel {
 	 * 计算移动时间
 	 */
 	private cacuMoveTime(src: Vector2, target: Vector2) {
-		return Math.abs(src.y - target.y) * this.moveTime;
+		return Math.sqrt(Math.abs(src.y - target.y)) * this.moveTime;
 	}
 
 	/**
@@ -549,7 +600,7 @@ class GridModel extends BaseModel {
 	 * 获取格子数据
 	 */
 	private getTile(x: number, y: number): TileData {
-		return this._tileList[x][y];
+		return this._tileList && this._tileList[x] && this._tileList[x][y];
 	}
 
 	/**
@@ -612,14 +663,14 @@ class GridModel extends BaseModel {
 	 * 移动时间
 	 */
 	private get moveTime(): number {
-		return 200;
+		return 400;
 	}
 
 	/**
 	 * 移除间隔
 	 */
 	private get removeInterval(): number {
-		return 80;
+		return 100;
 	}
 
 	/**
