@@ -11,6 +11,7 @@ class GridController extends BaseController {
 
 		/** V->M */
 		this.registerFunc(GameCmd.GAME_START, this.start, this);
+		this.registerFunc(GameCmd.GAME_OVER, this.over, this);
 		this.registerFunc(GridCmd.TOUCH_TILE, this.touchTile, this);
 		this.registerFunc(GridCmd.TOUCH_END, this.touchEnd, this);
 
@@ -27,7 +28,10 @@ class GridController extends BaseController {
 		this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
 		this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
 
+		this.registerFunc(GridCmd.SET_SELECT, this.setSelect, this);
 		this.registerFunc(GridCmd.SHAKE, this.shake, this);
+		this.registerFunc(GridCmd.SHOW_CHESTS, this.showChests, this);
+		this.registerFunc(GridCmd.HIDE_CHESTS, this.hideChests, this);
 	}
 
 	/**
@@ -35,6 +39,13 @@ class GridController extends BaseController {
 	 */
 	private start() {
 		this.model.start();
+	}
+
+	/**
+	 * 结束
+	 */
+	private over() {
+		this.model.over();
 	}
 
 	/**
@@ -73,6 +84,20 @@ class GridController extends BaseController {
 	}
 
 	/**
+	 * 显示宝箱
+	 */
+	private showChests() {
+		this.scene.showChests();
+	}
+
+	/**
+	 * 隐藏宝箱
+	 */
+	private hideChests() {
+		this.scene.hideChests();
+	}
+
+	/**
 	 * 震动
 	 */
 	public shake() {
@@ -91,6 +116,13 @@ class GridController extends BaseController {
 	 */
 	private signTiles(arr: Array<TileData>) {
 		this.scene.signTiles(arr);
+	}
+
+	/**
+	 * 设置选择光环
+	 */
+	private setSelect(pos: Vector2, type: number) {
+		this.scene.setSelect(pos, type);
 	}
 
 	/**

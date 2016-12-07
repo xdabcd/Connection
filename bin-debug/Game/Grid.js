@@ -9,13 +9,23 @@ var Grid = (function (_super) {
         _super.call(this);
         this._controller = new GridController(this);
         KeyboardUtils.addKeyUp(function (key) {
-            if (key == Keyboard.SPACE) {
+            if (key == Keyboard.LEFT) {
                 TimerManager.setTimeScale(1);
             }
         }, this);
         KeyboardUtils.addKeyDown(function (key) {
-            if (key == Keyboard.SPACE) {
-                TimerManager.setTimeScale(0.1);
+            if (key == Keyboard.LEFT) {
+                TimerManager.setTimeScale(0.05);
+            }
+        }, this);
+        KeyboardUtils.addKeyUp(function (key) {
+            if (key == Keyboard.RIGHT) {
+                TimerManager.setTimeScale(1);
+            }
+        }, this);
+        KeyboardUtils.addKeyDown(function (key) {
+            if (key == Keyboard.RIGHT) {
+                TimerManager.setTimeScale(5);
             }
         }, this);
     }
@@ -42,6 +52,13 @@ var Grid = (function (_super) {
         AnchorUtils.setAnchorY(this._bottom, 1);
         this._bottom.x = this.width / 2;
         this._bottom.y = this.height;
+        this.addChild(this._chests = ObjectPool.pop("Chests"));
+        AnchorUtils.setAnchorX(this._chests, 0.5);
+        AnchorUtils.setAnchorY(this._chests, 1);
+        this._chests.x = this.width / 2;
+        this._chests.y = this.height + this._chests.height + 10;
+        this.addChild(this._select = new egret.Bitmap);
+        this._select.visible = false;
         this._container.addChild(this._gridCon = new egret.DisplayObjectContainer);
         this.initGrid();
         this._container.addChild(this._arrowCon = new egret.DisplayObjectContainer);
@@ -71,6 +88,26 @@ var Grid = (function (_super) {
         }
     };
     /**
+     * 显示宝箱
+     */
+    p.showChests = function () {
+        var tw = new Tween(this._chests);
+        tw.to = { y: this.height + 16 };
+        tw.duration = 600;
+        tw.ease = TweenEase.CusOut;
+        tw.start();
+    };
+    /**
+     * 隐藏宝箱
+     */
+    p.hideChests = function () {
+        var tw = new Tween(this._chests);
+        tw.to = { y: this.height + this._chests.height + 10 };
+        tw.duration = 600;
+        tw.ease = TweenEase.CusIn;
+        tw.start();
+    };
+    /**
      * 创建格子
      */
     p.createTile = function (tileData) {
@@ -84,8 +121,9 @@ var Grid = (function (_super) {
         tile.y = tp.y;
         tile.type = tileData.type;
         tile.effect = tileData.effect;
+        tile.key = tileData.key;
         tile.touchEnabled = true;
-        this._tileCon.addChild(tile);
+        tile.addTo(this._tileCon);
         tile.setOnTouch(function () { _this.tileOnTouch(tile.pos); });
     };
     /**
@@ -171,6 +209,41 @@ var Grid = (function (_super) {
                 }
             }
             tile.sign = f;
+        }
+    };
+    /**
+     * 设置选择光环
+     */
+    p.setSelect = function (pos, type) {
+        if (type <= 0) {
+            this._select.texture = null;
+            this._select.visible = false;
+        }
+        else {
+            this._select.visible = true;
+            var tex = RES.getRes("select_" + type + "_png");
+            var tr = this.getTruePosition(pos.x, pos.y);
+            this._select.x = tr.x;
+            this._select.y = tr.y;
+            AnchorUtils.setAnchor(this._select, 0.5);
+            if (tex != this._select.texture) {
+                this._select.texture = tex;
+                TweenManager.removeTween(this._select);
+                this._select.rotation = 0;
+                this._select.alpha = 0.5;
+                this._select.scaleX = this._select.scaleY = 0.4;
+                var tw1 = new Tween(this._select);
+                tw1.to = { scaleX: 1, scaleY: 1, alpha: 1 };
+                tw1.duration = 300;
+                tw1.ease = TweenEase.CusOut;
+                tw1.start();
+                var tw2 = new Tween(this._select);
+                tw2.to = { rotation: 360 };
+                tw2.duration = 3000;
+                tw2.delay = tw1.duration;
+                tw2.loop = true;
+                tw2.start();
+            }
         }
     };
     /**
@@ -333,7 +406,7 @@ var Grid = (function (_super) {
      */
     p.getTruePosition = function (x, y) {
         var x = this.width / 2 + this.tileSize * (x - this.hor / 2 + 1 / 2);
-        var y = this.tileSize * (y + 1 / 2) + this.top;
+        var y = this.tileSize * (y + 1 / 2) * 1.02 + this.top;
         return new Vector2(x, y);
     };
     /**
@@ -362,7 +435,7 @@ var Grid = (function (_super) {
     );
     d(p, "top"
         ,function () {
-            return 5;
+            return 32;
         }
     );
     return Grid;

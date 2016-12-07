@@ -295,6 +295,28 @@ var TweenEase = (function () {
             return 0.5 * this.BounceOut(p * 2 - 1) + 0.5;
         }
     };
+    TweenEase.CusIn = function (p) {
+        if (p < 0.375) {
+            return -0.1 * p / 0.375;
+        }
+        else if (p < 0.5) {
+            return -0.1;
+        }
+        else {
+            return -0.1 + 1.1 * (p - 0.5) * 2;
+        }
+    };
+    TweenEase.CusOut = function (p) {
+        if (p < 0.5) {
+            return 1.1 * p * 2;
+        }
+        else if (p < 0.625) {
+            return 1.1;
+        }
+        else {
+            return 1.1 - 0.1 * (p - 0.625) / 0.375;
+        }
+    };
     return TweenEase;
 }());
 egret.registerClass(TweenEase,'TweenEase');

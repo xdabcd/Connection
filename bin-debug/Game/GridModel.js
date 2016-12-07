@@ -17,8 +17,17 @@ var GridModel = (function (_super) {
         this._hor = GameData.hor;
         this._ver = GameData.ver;
         this._selectArr = [];
+        this.showChests();
         this.initTileList();
         this.repair();
+        this._newKey = true;
+    };
+    /**
+     * 结束
+     */
+    p.over = function () {
+        this.touchEnd();
+        this.setState(GridState.Over);
     };
     /**
      * 触摸格子
@@ -41,19 +50,24 @@ var GridModel = (function (_super) {
                     var cr2 = this.canRemove;
                     this.connect(end, tileData, cr2);
                     this.sign();
+                    this.setSelect();
                     if (!cr1 && cr2) {
                         for (var i = 0; i < length; i++) {
                             this.select(this._selectArr[i], true);
                         }
                     }
                 }
-                else if (idx == length - 2) {
-                    ArrayUtils.remove(this._selectArr, end);
+                else if (idx < length - 1 && idx >= 0) {
+                    for (var i = length - 1; i > idx; i--) {
+                        this.unselect(this._selectArr[i]);
+                    }
+                    this._selectArr.splice(idx + 1, length - 1 - idx);
+                    length = this._selectArr.length;
                     var cr2 = this.canRemove;
-                    this.unselect(end);
                     this.sign();
+                    this.setSelect();
                     if (cr1 && !cr2) {
-                        for (var i = 0; i < length - 1; i++) {
+                        for (var i = 0; i <= length - 1; i++) {
                             this.select(this._selectArr[i], false);
                         }
                     }
@@ -77,6 +91,31 @@ var GridModel = (function (_super) {
             this.setState(GridState.Idle);
         }
         this._selectArr = [];
+        this.setSelect();
+    };
+    /**
+     * 设置选择光环
+     */
+    p.setSelect = function () {
+        var type = 0;
+        var cnt = this._selectArr.length;
+        if (cnt >= 20) {
+            type = 4;
+        }
+        else if (cnt >= 14) {
+            type = 3;
+        }
+        else if (cnt >= 7) {
+            type = 2;
+        }
+        else if (cnt >= 4) {
+            type = 1;
+        }
+        var pos;
+        if (cnt > 0) {
+            pos = this._selectArr[cnt - 1].pos;
+        }
+        this.applyFunc(GridCmd.SET_SELECT, pos, type);
     };
     /**
      * 消除
@@ -91,7 +130,7 @@ var GridModel = (function (_super) {
         var td;
         for (var i = 0; i < length; i++) {
             var tileData = this._selectArr[i];
-            if (!td && tileData.type > 0) {
+            if (!td && tileData.type > 0 && !tileData.key) {
                 td = tileData;
             }
             var x = tileData.pos.x;
@@ -146,11 +185,24 @@ var GridModel = (function (_super) {
                 }
             }
         }
+        var keyPos;
+        if (this._newKey) {
+            this._newKey = false;
+            var arr = [];
+            for (var i = 0; i < removeArr.length; i++) {
+                for (var j = 0; j < removeArr[i].length; j++) {
+                    arr.push(new Vector2(i, j));
+                }
+            }
+            var idx = RandomUtils.limitInteger(0, arr.length - 1);
+            keyPos = arr[idx];
+        }
         for (var x = 0; x < removeArr.length; x++) {
             var tmpArr = removeArr[x];
             tmpArr.sort(SortUtils.sortNum);
             for (var i = 0; i < tmpArr.length; i++) {
-                var tileData = this.addTile(x, i - tmpArr.length);
+                var k = (keyPos != null) && (x == keyPos.x) && (i == keyPos.y);
+                var tileData = this.addTile(x, i - tmpArr.length, null, null, k);
                 moveList.push(this.moveTile(tileData, new Vector2(x, i)));
             }
             for (var y = 0; y < this._ver; y++) {
@@ -213,9 +265,6 @@ var GridModel = (function (_super) {
             cnt = this._effectCntArr[effect];
         }
         var score = GameData.cacuEffectScore(tileData.effect, cnt);
-        this.setTimeout(delay, function () {
-            _this.addScore(score, tileData.pos, 0);
-        });
         var duration = 0;
         var pos = tileData.pos;
         var posArr = this.getEffect(tileData);
@@ -227,6 +276,7 @@ var GridModel = (function (_super) {
             var p = posArr[i];
             var direction = void 0;
             var l = 0;
+            var td = this.getTile(p.x, p.y);
             if (flag1) {
                 if (p.y > pos.y) {
                     direction = Direction.Down;
@@ -248,15 +298,20 @@ var GridModel = (function (_super) {
             }
             else if (flag3) {
                 l = i + 1;
-                var td = this.getTile(p.x, p.y);
                 if (td) {
                     td.removeFx = TileRemoveFx.Thunder;
                 }
             }
             var t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
+            if (td && td.key) {
+                score += GameData.keyScore;
+            }
             duration = Math.max(duration, t);
         }
         this.shake(tileData, delay);
+        this.setTimeout(delay, function () {
+            _this.addScore(score, tileData.pos, 0);
+        });
         return duration;
     };
     /**
@@ -415,6 +470,33 @@ var GridModel = (function (_super) {
         this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, score, pos, type);
     };
     /**
+     * 显示宝箱
+     */
+    p.showChests = function () {
+        this._ver -= 1;
+        this._newKey = false;
+        this._keyCount = 0;
+        this.applyFunc(GridCmd.SHOW_CHESTS);
+    };
+    /**
+     * 隐藏宝箱
+     */
+    p.hideChests = function () {
+        this._ver += 1;
+        this.applyFunc(GridCmd.HIDE_CHESTS);
+    };
+    /**
+     * 解锁宝箱
+     */
+    p.unlockChest = function () {
+        this._keyCount += 1;
+        if (this._keyCount >= 5) {
+            this.hideChests();
+            return;
+        }
+        this._newKey = true;
+    };
+    /**
      * 初始化格子列表
      */
     p.initTileList = function () {
@@ -427,13 +509,15 @@ var GridModel = (function (_super) {
     /**
      * 添加格子
      */
-    p.addTile = function (x, y, type, effect) {
+    p.addTile = function (x, y, type, effect, key) {
         if (type === void 0) { type = null; }
         if (effect === void 0) { effect = null; }
+        if (key === void 0) { key = false; }
         var tileData = new TileData();
         tileData.pos = new Vector2(x, y);
         tileData.type = type == null ? this.randomType() : type;
         tileData.effect = effect || TileEffect.NONE;
+        tileData.key = key;
         this.creatTile(tileData);
         return tileData;
     };
@@ -441,6 +525,7 @@ var GridModel = (function (_super) {
      * 删除格子
      */
     p.delTile = function (x, y, direction, delay) {
+        var _this = this;
         var duration = delay + this.removeTime;
         var tileData = this.getTile(x, y);
         if (tileData) {
@@ -450,6 +535,12 @@ var GridModel = (function (_super) {
             }
             else {
                 this.removeTile(tileData, this.removeTime, delay);
+            }
+            if (tileData.key) {
+                this.setTimeout(delay, function () {
+                    _this.unlockChest();
+                    _this.addScore(GameData.keyScore, tileData.pos, tileData.type);
+                });
             }
             if (tileData.effect != TileEffect.NONE && direction != Direction.Center) {
                 var t = this.doEffect(tileData, delay);
@@ -616,6 +707,8 @@ var GridModel = (function (_super) {
      * 设置状态
      */
     p.setState = function (state) {
+        if (this.isState(GridState.Over))
+            return;
         this._state = state;
     };
     /**
@@ -645,7 +738,7 @@ var GridModel = (function (_super) {
          * 移动时间
          */
         ,function () {
-            return 400;
+            return 450;
         }
     );
     d(p, "removeInterval"
@@ -676,6 +769,7 @@ var GridState;
     GridState[GridState["Idle"] = 1] = "Idle";
     GridState[GridState["Select"] = 2] = "Select";
     GridState[GridState["Remove"] = 3] = "Remove";
-    GridState[GridState["REPAIR"] = 4] = "REPAIR";
+    GridState[GridState["Repair"] = 4] = "Repair";
+    GridState[GridState["Over"] = 5] = "Over";
 })(GridState || (GridState = {}));
 //# sourceMappingURL=GridModel.js.map

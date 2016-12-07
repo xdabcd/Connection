@@ -14,7 +14,7 @@ var DateUtils = (function () {
      * @return
      *
      */
-    p.getFormatBySecond = function (second, type) {
+    DateUtils.getFormatBySecond = function (second, type) {
         if (type === void 0) { type = 1; }
         var str = "";
         switch (type) {
@@ -37,7 +37,7 @@ var DateUtils = (function () {
         return str;
     };
     //1: 00:00:00
-    p.getFormatBySecond1 = function (t) {
+    DateUtils.getFormatBySecond1 = function (t) {
         if (t === void 0) { t = 0; }
         var hourst = Math.floor(t / 3600);
         var hours;
@@ -75,7 +75,7 @@ var DateUtils = (function () {
         return hours + ":" + mins + ":" + sens;
     };
     //3: 00:00
-    p.getFormatBySecond3 = function (t) {
+    DateUtils.getFormatBySecond3 = function (t) {
         if (t === void 0) { t = 0; }
         var hourst = Math.floor(t / 3600);
         var minst = Math.floor((t - hourst * 3600) / 60);
@@ -103,7 +103,7 @@ var DateUtils = (function () {
         return mins + ":" + sens;
     };
     //2:yyyy-mm-dd h:m:s
-    p.getFormatBySecond2 = function (time) {
+    DateUtils.getFormatBySecond2 = function (time) {
         var date = new Date(time);
         var year = date.getFullYear();
         var month = date.getMonth() + 1; //返回的月份从0-11；
@@ -114,7 +114,7 @@ var DateUtils = (function () {
         return year + "-" + month + "-" + day + " " + hours + ":" + minute + ":" + second;
     };
     //4:xx天前，xx小时前，xx分钟前
-    p.getFormatBySecond4 = function (time) {
+    DateUtils.getFormatBySecond4 = function (time) {
         var t = Math.floor(time / 3600);
         if (t > 0) {
             if (t > 24) {
@@ -128,7 +128,7 @@ var DateUtils = (function () {
             return Math.floor(time / 60) + "分钟前";
         }
     };
-    p.getFormatBySecond5 = function (time) {
+    DateUtils.getFormatBySecond5 = function (time) {
         //每个时间单位所对应的秒数
         var oneDay = 3600 * 24;
         var oneHourst = 3600;

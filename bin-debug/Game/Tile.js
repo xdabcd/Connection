@@ -8,9 +8,11 @@ var Tile = (function (_super) {
     function Tile() {
         _super.call(this);
         this.addChild(this._signIcon = DisplayUtils.createBitmap("gem_bg_2_png"));
-        this.addChild(this._icon = new egret.Bitmap);
+        this.addChild(this._con = new egret.DisplayObjectContainer);
+        this._con.addChild(this._icon = new egret.Bitmap);
+        this._con.addChild(this._key = new egret.Bitmap);
         this.addTouch();
-        AnchorUtils.setAnchor(this._icon, 0.5);
+        AnchorUtils.setAnchor(this._con, 0.5);
         AnchorUtils.setAnchor(this._signIcon, 0.5);
     }
     var d = __define,c=Tile,p=c.prototype;
@@ -18,9 +20,9 @@ var Tile = (function (_super) {
      * 重置
      */
     p.reset = function () {
-        this._icon.scaleX = this._icon.scaleY = 1;
-        this._icon.rotation = 0;
-        this._icon.alpha = 1;
+        this._con.scaleX = this._con.scaleY = 1;
+        this._con.rotation = 0;
+        this._con.alpha = 1;
         this.alpha = 1;
         this.rotation = 0;
         this._signIcon.visible = false;
@@ -49,6 +51,37 @@ var Tile = (function (_super) {
     p.setOnTouch = function (callBack) {
         this._callBack = callBack;
     };
+    /**
+     * 添加到
+     */
+    p.addTo = function (parent) {
+        var _this = this;
+        parent.addChild(this);
+        var fx;
+        switch (this._effect) {
+            case TileEffect.BOMB:
+                fx = ObjectPool.pop("ItemFireInFx");
+                break;
+            case TileEffect.CROSS:
+                fx = ObjectPool.pop("ItemWaterInFx");
+                break;
+            case TileEffect.KIND:
+                fx = ObjectPool.pop("ItemThunderInFx");
+                break;
+            case TileEffect.RANDOM:
+                fx = ObjectPool.pop("ItemStormInFx");
+                break;
+        }
+        if (fx != null) {
+            this._icon.visible = false;
+            this.addChild(fx);
+            fx.setCallBack(function () {
+                _this._icon.visible = true;
+                _this.removeChild(fx);
+            });
+            fx.play();
+        }
+    };
     d(p, "sign",undefined
         /**
          * 标记
@@ -75,7 +108,7 @@ var Tile = (function (_super) {
             var delay = 0;
             var tw = function (a, t, callBack) {
                 if (callBack === void 0) { callBack = null; }
-                var tw1 = new Tween(_this._icon);
+                var tw1 = new Tween(_this._con);
                 tw1.to = {
                     rotation: a
                 };
@@ -85,7 +118,7 @@ var Tile = (function (_super) {
                 tw1.start();
                 delay += t;
             };
-            this._icon.rotation = 170;
+            this._con.rotation = 170;
             tw(10, duration * 0.5);
             tw(-10, delay * 0.25);
             tw(5, duration * 0.2);
@@ -118,7 +151,7 @@ var Tile = (function (_super) {
         this.pos = new Vector2(-100, -100);
         var self = this;
         this.sign = false;
-        var tween = new Tween(this._icon);
+        var tween = new Tween(this._con);
         tween.to = { scaleX: 0.2, scaleY: 0.2 };
         tween.duration = duration;
         tween.callBack = function () {
@@ -193,7 +226,7 @@ var Tile = (function (_super) {
         var delay = 0;
         var tw = function (a, t, callBack) {
             if (callBack === void 0) { callBack = null; }
-            var tw1 = new Tween(_this._icon);
+            var tw1 = new Tween(_this._con);
             tw1.to = {
                 x: l * Math.cos(r) * a,
                 y: l * Math.sin(r) * a
@@ -235,9 +268,12 @@ var Tile = (function (_super) {
         var time = 0;
         var g = 6000;
         var flag = false;
+        tw.to = { y: targetPos.y };
         tw.updateFunc = function (t) {
-            if (flag)
+            if (flag) {
+                _this.y = targetPos.y;
                 return;
+            }
             t /= 1000;
             t -= time;
             _this.y = speed * t + y + 1 / 2 * g * t * t;
@@ -278,6 +314,20 @@ var Tile = (function (_super) {
             if (this._effect == TileEffect.NONE)
                 return;
             this._icon.texture = RES.getRes("item_" + value + "_png");
+        }
+    );
+    d(p, "key",undefined
+        /**
+         * 设置钥匙
+         */
+        ,function (value) {
+            if (value) {
+                this._key.visible = true;
+                this._key.texture = RES.getRes("key_" + this._type + "_png");
+            }
+            else {
+                this._key.visible = false;
+            }
         }
     );
     d(p, "pos"

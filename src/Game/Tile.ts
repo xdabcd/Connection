@@ -7,16 +7,22 @@ class Tile extends egret.DisplayObjectContainer {
     public constructor() {
         super();
         this.addChild(this._signIcon = DisplayUtils.createBitmap("gem_bg_2_png"));
-        this.addChild(this._icon = new egret.Bitmap);
+        this.addChild(this._con = new egret.DisplayObjectContainer);
+        this._con.addChild(this._icon = new egret.Bitmap);
+        this._con.addChild(this._key = new egret.Bitmap);
         this.addTouch();
-        AnchorUtils.setAnchor(this._icon, 0.5);
+        AnchorUtils.setAnchor(this._con, 0.5);
         AnchorUtils.setAnchor(this._signIcon, 0.5);
     }
 
     /** 触摸回调 */
     private _callBack: Function;
+    /** 容器 */
+    private _con: egret.DisplayObjectContainer;
     /** 图标 */
     private _icon: egret.Bitmap;
+    /** 钥匙 */
+    private _key: egret.Bitmap;
     /** 标记 */
     private _signIcon: egret.Bitmap;
     /** 位置 */
@@ -33,9 +39,9 @@ class Tile extends egret.DisplayObjectContainer {
      * 重置
      */
     public reset() {
-        this._icon.scaleX = this._icon.scaleY = 1;
-        this._icon.rotation = 0;
-        this._icon.alpha = 1;
+        this._con.scaleX = this._con.scaleY = 1;
+        this._con.rotation = 0;
+        this._con.alpha = 1;
         this.alpha = 1;
         this.rotation = 0;
         this._signIcon.visible = false;
@@ -69,6 +75,37 @@ class Tile extends egret.DisplayObjectContainer {
     }
 
     /**
+     * 添加到
+     */
+    public addTo(parent: egret.DisplayObjectContainer) {
+        parent.addChild(this);
+        var fx: Fx;
+        switch (this._effect) {
+            case TileEffect.BOMB:
+                fx = ObjectPool.pop("ItemFireInFx") as ItemFireInFx;
+                break;
+            case TileEffect.CROSS:
+                fx = ObjectPool.pop("ItemWaterInFx") as ItemWaterInFx;
+                break;
+            case TileEffect.KIND:
+                fx = ObjectPool.pop("ItemThunderInFx") as ItemThunderInFx;
+                break;
+            case TileEffect.RANDOM:
+                fx = ObjectPool.pop("ItemStormInFx") as ItemStormInFx;
+                break;
+        }
+        if (fx != null) {
+            this._icon.visible = false;
+            this.addChild(fx);
+            fx.setCallBack(() => {
+                this._icon.visible = true;
+                this.removeChild(fx);
+            });
+            fx.play();
+        }
+    }
+
+    /**
      * 标记
      */
     public set sign(value: boolean) {
@@ -91,7 +128,7 @@ class Tile extends egret.DisplayObjectContainer {
             var duration = 500;
             var delay = 0;
             var tw = (a: number, t: number, callBack: Function = null) => {
-                var tw1 = new Tween(this._icon);
+                var tw1 = new Tween(this._con);
                 tw1.to = {
                     rotation: a
                 };
@@ -101,7 +138,7 @@ class Tile extends egret.DisplayObjectContainer {
                 tw1.start();
                 delay += t;
             }
-            this._icon.rotation = 170;
+            this._con.rotation = 170;
             tw(10, duration * 0.5);
             tw(-10, delay * 0.25);
             tw(5, duration * 0.2);
@@ -133,7 +170,7 @@ class Tile extends egret.DisplayObjectContainer {
         this.pos = new Vector2(-100, -100);
         var self = this;
         this.sign = false;
-        var tween = new Tween(this._icon);
+        var tween = new Tween(this._con);
         tween.to = { scaleX: 0.2, scaleY: 0.2 };
         tween.duration = duration;
         tween.callBack = () => {
@@ -208,7 +245,7 @@ class Tile extends egret.DisplayObjectContainer {
         var duration = 650;
         var delay = 0;
         var tw = (a: number, t: number, callBack: Function = null) => {
-            var tw1 = new Tween(this._icon);
+            var tw1 = new Tween(this._con);
             tw1.to = {
                 x: l * Math.cos(r) * a,
                 y: l * Math.sin(r) * a
@@ -250,8 +287,12 @@ class Tile extends egret.DisplayObjectContainer {
         var time = 0;
         var g = 6000;
         var flag = false;
+        tw.to = { y: targetPos.y };
         tw.updateFunc = (t) => {
-            if (flag) return;
+            if (flag) {
+                this.y = targetPos.y;
+                return;
+            }
             t /= 1000;
             t -= time;
             this.y = speed * t + y + 1 / 2 * g * t * t;
@@ -289,6 +330,18 @@ class Tile extends egret.DisplayObjectContainer {
         this._effect = value;
         if (this._effect == TileEffect.NONE) return;
         this._icon.texture = RES.getRes("item_" + value + "_png");
+    }
+
+    /**
+     * 设置钥匙
+     */
+    public set key(value: boolean) {
+        if (value) {
+            this._key.visible = true;
+            this._key.texture = RES.getRes("key_" + this._type + "_png");
+        } else {
+            this._key.visible = false;
+        }
     }
 
 	/**

@@ -19,5 +19,8 @@ class GridCmd {
 	public static TILE_CHANGE_EFFECT: string = "tile_change_effect";
 	public static TILE_CHANGE_TYPE: string = "tile_change_type";
 
+	public static SET_SELECT: string = "set_select";
 	public static SHAKE: string = "shake";
+	public static SHOW_CHESTS: string = "show_chests";
+	public static HIDE_CHESTS: string = "hide_chests";
 }

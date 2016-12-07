@@ -4,6 +4,16 @@
  * 
  */
 class GameData {
+	/** 字体 */
+	public static get font(): string {
+		return "Cookies";
+	}
+
+	/** 倒计时 */
+	public static get countdown(): number {
+		return 60;
+	}
+
 	/** 横向大小 */
 	public static get hor(): number {
 		return 7;
@@ -16,7 +26,7 @@ class GameData {
 
 	/** 格子大小 */
 	public static get tileSize(): number {
-		return 92;
+		return 90;
 	}
 
 	/**
@@ -63,6 +73,20 @@ class GameData {
 				break
 		}
 		return score;
+	}
+
+	/**
+	 * 钥匙得分
+	 */
+	public static get keyScore(): number {
+		return 200;
+	}
+
+	/**
+	 * 倍数得分
+	 */
+	public static get timesScore(): number {
+		return 1000;
 	}
 
 	/** 

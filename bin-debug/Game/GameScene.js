@@ -21,29 +21,23 @@ var GameScene = (function (_super) {
         AnchorUtils.setAnchorX(this._topBg, 0.5);
         this.addChild(this._scoreBg = DisplayUtils.createBitmap("score_bg_png"));
         AnchorUtils.setAnchor(this._scoreBg, 0.5);
-        this.addChild(this._score = new egret.TextField);
+        this.addChild(this._score = new Label);
         this._score.width = 400;
         this._score.size = 45;
-        this._score.textAlign = "center";
         this._score.stroke = 3;
-        this._score.fontFamily = "Cookies";
         AnchorUtils.setAnchorX(this._score, 0.5);
-        this._score.text = '33232';
         this.addChild(this._timesBg = DisplayUtils.createBitmap("times_bg_png"));
         AnchorUtils.setAnchor(this._timesBg, 0.5);
-        this.addChild(this._times = new egret.TextField);
+        this.addChild(this._times = new Label);
         this._times.width = 120;
-        this._times.size = 32;
-        this._times.textAlign = "center";
+        this._times.size = 26;
         this._times.stroke = 3;
-        this._times.fontFamily = "Cookies";
-        this._times.textColor = 0xFEEF46;
+        this._times.textColor = 0;
+        this._times.strokeColor = 0xFFFFFF;
         AnchorUtils.setAnchorX(this._times, 0.5);
-        this._times.text = 'x10';
-        this.addChild(this._timeBg = DisplayUtils.createBitmap("time_bg_png"));
-        AnchorUtils.setAnchorX(this._timeBg, 0.5);
-        AnchorUtils.setAnchorY(this._timeBg, 1);
+        this.addChild(this._countdown = new Countdown);
         this.addChild(this._scoreCon = new egret.DisplayObjectContainer);
+        this.addChild(this._hintCon = new egret.DisplayObjectContainer);
     };
     /**
      * 屏幕尺寸变化时调用
@@ -54,17 +48,121 @@ var GameScene = (function (_super) {
         this._grid.x = w / 2;
         this._grid.y = h;
         this._topBg.x = w / 2;
-        this._topBg.y = -40;
+        this._topBg.y = 0;
         this._scoreBg.x = w / 2;
-        this._scoreBg.y = 150;
+        this._scoreBg.y = 200;
         this._score.x = this._scoreBg.x;
-        this._score.y = this._scoreBg.y - 30;
+        this._score.y = this._scoreBg.y - 35;
         this._timesBg.x = this._scoreBg.x;
-        this._timesBg.y = this._scoreBg.y + 60;
+        this._timesBg.y = this._scoreBg.y + 55;
+        this._timesBg.visible = false;
         this._times.x = this._timesBg.x;
         this._times.y = this._timesBg.y - 25;
-        this._timeBg.x = w / 2;
-        this._timeBg.y = h - this._grid.height + 5;
+        this._countdown.x = w / 2;
+        this._countdown.y = this._topBg.height - 33;
+        this._hintCon.x = w / 2;
+        this._hintCon.y = this._grid.y - this._grid.height / 2;
+    };
+    /**
+     * 显示计时开始
+     */
+    p.showTimeStart = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_time_start_png", 0.5, 0.35);
+    };
+    /**
+     * 初始化倒计时
+     */
+    p.initTime = function (top) {
+        this._countdown.init(top);
+    };
+    /**
+     * 显示GO
+     */
+    p.showGO = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_go_png", 0.5, 0.35);
+    };
+    /**
+     * 更新倒计时
+     */
+    p.updateTime = function (time) {
+        this._countdown.setTime(time);
+    };
+    /**
+     * 更新得分
+     */
+    p.updateScore = function (score, isAdd) {
+        if (isAdd === void 0) { isAdd = false; }
+        if (isAdd) {
+            this.blinkScore("" + score);
+        }
+        else {
+            this._score.text = "" + score;
+        }
+    };
+    /**
+     * 得分闪烁
+     */
+    p.blinkScore = function (text) {
+        var score = this._score;
+        TweenManager.removeTween(score);
+        var a = 0xFFFFFF;
+        var b = 0;
+        var col0 = 0xFFFEC5;
+        var col1 = 0xBB8C9D;
+        var col2 = 0xFFFD79;
+        var col3 = 0xFFFFFF;
+        score.textColor = col0;
+        score.strokeColor = col1;
+        var tw1 = new Tween(score);
+        tw1.duration = 20;
+        tw1.callBack = function () {
+            score.text = text;
+        };
+        tw1.start();
+        var tw2 = new Tween(score);
+        tw2.delay = tw1.delay + tw1.duration;
+        tw2.duration = 70;
+        tw2.callBack = function () {
+            score.textColor = col2;
+            score.strokeColor = col3;
+        };
+        tw2.start();
+        var tw3 = new Tween(score);
+        tw3.delay = tw2.delay + tw2.duration;
+        tw3.duration = 90;
+        tw3.callBack = function () {
+            score.textColor = col0;
+            score.strokeColor = col1;
+        };
+        tw3.start();
+        var tw4 = new Tween(score);
+        tw4.delay = tw3.delay + tw3.duration;
+        tw4.duration = 90;
+        tw4.callBack = function () {
+            score.textColor = col2;
+            score.strokeColor = col3;
+        };
+        tw4.start();
+        var tw5 = new Tween(score);
+        tw5.delay = tw4.delay + tw4.duration;
+        tw5.duration = 40;
+        tw5.callBack = function () {
+            score.textColor = a;
+            score.strokeColor = b;
+        };
+        tw5.start();
+    };
+    /**
+     * 更新倍数
+     */
+    p.updateTimes = function (times) {
+        this._times.text = "x" + times;
     };
     /**
      * 显示得分
@@ -78,6 +176,22 @@ var GameScene = (function (_super) {
         fs.show(score, type);
     };
     /**
+     * 显示时间完
+     */
+    p.showTimesUp = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show3("hint_times_up_png");
+    };
+    /**
+     * 游戏结束
+     */
+    p.gameOver = function () {
+        this._countdown.over();
+        this.showTimesUp();
+    };
+    /**
      * 打开
      */
     p.open = function () {
@@ -87,6 +201,7 @@ var GameScene = (function (_super) {
         }
         _super.prototype.open.call(this);
         this.onResize();
+        this.applyFunc(GameCmd.GAME_START);
         this.applyControllerFunc(ControllerID.Grid, GameCmd.GAME_START);
     };
     /**

@@ -7,6 +7,18 @@ var GameData = (function () {
     function GameData() {
     }
     var d = __define,c=GameData,p=c.prototype;
+    d(GameData, "font"
+        /** 字体 */
+        ,function () {
+            return "Cookies";
+        }
+    );
+    d(GameData, "countdown"
+        /** 倒计时 */
+        ,function () {
+            return 60;
+        }
+    );
     d(GameData, "hor"
         /** 横向大小 */
         ,function () {
@@ -22,7 +34,7 @@ var GameData = (function () {
     d(GameData, "tileSize"
         /** 格子大小 */
         ,function () {
-            return 92;
+            return 90;
         }
     );
     /**
@@ -75,6 +87,22 @@ var GameData = (function () {
         }
         return score;
     };
+    d(GameData, "keyScore"
+        /**
+         * 钥匙得分
+         */
+        ,function () {
+            return 200;
+        }
+    );
+    d(GameData, "timesScore"
+        /**
+         * 倍数得分
+         */
+        ,function () {
+            return 1000;
+        }
+    );
     /**
      * 获取格子颜色 (1: 2: 3: 4: )
      */

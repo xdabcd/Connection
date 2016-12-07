@@ -11,6 +11,7 @@ var GridController = (function (_super) {
         ControllerManager.instance.register(ControllerID.Grid, this);
         /** V->M */
         this.registerFunc(GameCmd.GAME_START, this.start, this);
+        this.registerFunc(GameCmd.GAME_OVER, this.over, this);
         this.registerFunc(GridCmd.TOUCH_TILE, this.touchTile, this);
         this.registerFunc(GridCmd.TOUCH_END, this.touchEnd, this);
         /** M->V */
@@ -25,7 +26,10 @@ var GridController = (function (_super) {
         this.registerFunc(GridCmd.TILE_MOVE, this.moveTile, this);
         this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
         this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
+        this.registerFunc(GridCmd.SET_SELECT, this.setSelect, this);
         this.registerFunc(GridCmd.SHAKE, this.shake, this);
+        this.registerFunc(GridCmd.SHOW_CHESTS, this.showChests, this);
+        this.registerFunc(GridCmd.HIDE_CHESTS, this.hideChests, this);
     }
     var d = __define,c=GridController,p=c.prototype;
     /**
@@ -33,6 +37,12 @@ var GridController = (function (_super) {
      */
     p.start = function () {
         this.model.start();
+    };
+    /**
+     * 结束
+     */
+    p.over = function () {
+        this.model.over();
     };
     /**
      * 点击格子
@@ -65,6 +75,18 @@ var GridController = (function (_super) {
         this.scene.hitTile(tileData, duration, direction);
     };
     /**
+     * 显示宝箱
+     */
+    p.showChests = function () {
+        this.scene.showChests();
+    };
+    /**
+     * 隐藏宝箱
+     */
+    p.hideChests = function () {
+        this.scene.hideChests();
+    };
+    /**
      * 震动
      */
     p.shake = function () {
@@ -81,6 +103,12 @@ var GridController = (function (_super) {
      */
     p.signTiles = function (arr) {
         this.scene.signTiles(arr);
+    };
+    /**
+     * 设置选择光环
+     */
+    p.setSelect = function (pos, type) {
+        this.scene.setSelect(pos, type);
     };
     /**
      * 连接

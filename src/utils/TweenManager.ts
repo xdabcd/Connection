@@ -296,7 +296,6 @@ class TweenEase {
 
     public static BackIn(p: number): number {
         return p * p * p - p * Math.sin(p * Math.PI);
-
     }
 
     public static BackOut(p: number): number {
@@ -340,6 +339,26 @@ class TweenEase {
         }
         else {
             return 0.5 * this.BounceOut(p * 2 - 1) + 0.5;
+        }
+    }
+
+    public static CusIn(p: number): number {
+        if (p < 0.375) {
+            return -0.1 * p / 0.375;
+        } else if (p < 0.5) {
+            return -0.1;
+        } else {
+            return -0.1 + 1.1 * (p - 0.5) * 2;
+        }
+    }
+
+    public static CusOut(p: number): number {
+        if (p < 0.5) {
+            return 1.1 * p * 2;
+        } else if (p < 0.625) {
+            return 1.1;
+        } else {
+            return 1.1 - 0.1 * (p - 0.625) / 0.375;
         }
     }
 }

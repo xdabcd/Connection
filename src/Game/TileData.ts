@@ -13,6 +13,8 @@ class TileData {
     /** 消失效果 */
     public removeFx: TileRemoveFx = TileRemoveFx.Smoke;
     public info = null;
+    /** 钥匙 */
+    public key: boolean = false;
 
     public clone(): TileData {
         var data = new TileData();
@@ -20,6 +22,7 @@ class TileData {
         data.type = this.type;
         data.effect = this.effect;
         data.info = this.info;
+        data.key = this.key;
         return data;
     }
 }

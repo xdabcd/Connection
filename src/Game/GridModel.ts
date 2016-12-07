@@ -12,6 +12,8 @@ class GridModel extends BaseModel {
 	private _signArr: Array<TileData>;
 	private _effectCntArr: Array<number>;
 	private _isShake: boolean;
+	private _keyCount: number;
+	private _newKey: boolean;
 
 	/**
 	 * 开始
@@ -20,9 +22,21 @@ class GridModel extends BaseModel {
 		this.setState(GridState.Start);
 		this._hor = GameData.hor;
 		this._ver = GameData.ver;
+
+
 		this._selectArr = [];
+		this.showChests();
 		this.initTileList();
 		this.repair();
+		this._newKey = true;
+	}
+
+	/**
+	 * 结束
+	 */
+	public over() {
+		this.touchEnd();
+		this.setState(GridState.Over);
 	}
 
 	/**
@@ -45,18 +59,24 @@ class GridModel extends BaseModel {
 					var cr2 = this.canRemove;
 					this.connect(end, tileData, cr2);
 					this.sign();
+					this.setSelect();
 					if (!cr1 && cr2) {
 						for (let i = 0; i < length; i++) {
 							this.select(this._selectArr[i], true);
 						}
 					}
-				} else if (idx == length - 2) {
-					ArrayUtils.remove(this._selectArr, end);
+				} else if (idx < length - 1 && idx >= 0) {
+					for (let i = length - 1; i > idx; i--) {
+						this.unselect(this._selectArr[i]);
+					}
+					this._selectArr.splice(idx + 1, length - 1 - idx);
+					length = this._selectArr.length;
+
 					var cr2 = this.canRemove;
-					this.unselect(end);
 					this.sign();
+					this.setSelect();
 					if (cr1 && !cr2) {
-						for (let i = 0; i < length - 1; i++) {
+						for (let i = 0; i <= length - 1; i++) {
 							this.select(this._selectArr[i], false);
 						}
 					}
@@ -80,6 +100,29 @@ class GridModel extends BaseModel {
 			this.setState(GridState.Idle);
 		}
 		this._selectArr = [];
+		this.setSelect();
+	}
+
+	/**
+	 * 设置选择光环
+	 */
+	private setSelect() {
+		var type = 0;
+		var cnt = this._selectArr.length
+		if (cnt >= 20) {
+			type = 4;
+		} else if (cnt >= 14) {
+			type = 3;
+		} else if (cnt >= 7) {
+			type = 2;
+		} else if (cnt >= 4) {
+			type = 1;
+		}
+		var pos;
+		if (cnt > 0) {
+			pos = this._selectArr[cnt - 1].pos;
+		}
+		this.applyFunc(GridCmd.SET_SELECT, pos, type);
 	}
 
 	/**
@@ -94,7 +137,7 @@ class GridModel extends BaseModel {
 		var td;
 		for (let i = 0; i < length; i++) {
 			let tileData = this._selectArr[i];
-			if (!td && tileData.type > 0) {
+			if (!td && tileData.type > 0 && !tileData.key) {
 				td = tileData;
 			}
 			let x = tileData.pos.x;
@@ -149,11 +192,25 @@ class GridModel extends BaseModel {
 			}
 		}
 
+		var keyPos: Vector2;
+		if (this._newKey) {
+			this._newKey = false;
+			var arr = [];
+			for (let i = 0; i < removeArr.length; i++) {
+				for (let j = 0; j < removeArr[i].length; j++) {
+					arr.push(new Vector2(i, j));
+				}
+			}
+			var idx = RandomUtils.limitInteger(0, arr.length - 1);
+			keyPos = arr[idx];
+		}
 		for (let x: number = 0; x < removeArr.length; x++) {
 			let tmpArr: Array<number> = removeArr[x];
 			tmpArr.sort(SortUtils.sortNum);
+
 			for (let i: number = 0; i < tmpArr.length; i++) {
-				let tileData = this.addTile(x, i - tmpArr.length);
+				var k = (keyPos != null) && (x == keyPos.x) && (i == keyPos.y);
+				let tileData = this.addTile(x, i - tmpArr.length, null, null, k);
 				moveList.push(this.moveTile(tileData, new Vector2(x, i)));
 			}
 
@@ -217,9 +274,6 @@ class GridModel extends BaseModel {
 			cnt = this._effectCntArr[effect];
 		}
 		var score = GameData.cacuEffectScore(tileData.effect, cnt);
-		this.setTimeout(delay, () => {
-			this.addScore(score, tileData.pos, 0);
-		});
 
 		var duration = 0;
 		var pos = tileData.pos;
@@ -232,6 +286,7 @@ class GridModel extends BaseModel {
 			let p = posArr[i];
 			let direction;
 			let l = 0;
+			let td = this.getTile(p.x, p.y);
 			if (flag1) {
 				if (p.y > pos.y) {
 					direction = Direction.Down;
@@ -248,16 +303,22 @@ class GridModel extends BaseModel {
 				l = p.x + 1;
 			} else if (flag3) {
 				l = i + 1;
-				var td = this.getTile(p.x, p.y);
 				if (td) {
 					td.removeFx = TileRemoveFx.Thunder;
 				}
 			}
 
 			let t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
+			if (td && td.key) {
+				score += GameData.keyScore;
+			}
 			duration = Math.max(duration, t);
 		}
 		this.shake(tileData, delay);
+
+		this.setTimeout(delay, () => {
+			this.addScore(score, tileData.pos, 0);
+		});
 
 		return duration;
 	}
@@ -417,6 +478,36 @@ class GridModel extends BaseModel {
 	}
 
 	/**
+	 * 显示宝箱
+	 */
+	private showChests() {
+		this._ver -= 1;
+		this._newKey = false;
+		this._keyCount = 0;
+		this.applyFunc(GridCmd.SHOW_CHESTS);
+	}
+
+	/**
+	 * 隐藏宝箱
+	 */
+	private hideChests() {
+		this._ver += 1;
+		this.applyFunc(GridCmd.HIDE_CHESTS);
+	}
+
+	/**
+	 * 解锁宝箱
+	 */
+	private unlockChest() {
+		this._keyCount += 1;
+		if (this._keyCount >= 5) {
+			this.hideChests();
+			return;
+		}
+		this._newKey = true;
+	}
+
+	/**
 	 * 初始化格子列表
 	 */
 	private initTileList(): void {
@@ -433,11 +524,12 @@ class GridModel extends BaseModel {
 	/**
 	 * 添加格子
 	 */
-	private addTile(x: number, y: number, type: number = null, effect: TileEffect = null): TileData {
+	private addTile(x: number, y: number, type: number = null, effect: TileEffect = null, key: boolean = false): TileData {
 		var tileData = new TileData();
 		tileData.pos = new Vector2(x, y);
 		tileData.type = type == null ? this.randomType() : type;
 		tileData.effect = effect || TileEffect.NONE;
+		tileData.key = key;
 		this.creatTile(tileData);
 		return tileData;
 	}
@@ -454,6 +546,13 @@ class GridModel extends BaseModel {
 				this.hitTile(tileData, this.removeTime, direction, delay);
 			} else {
 				this.removeTile(tileData, this.removeTime, delay);
+			}
+
+			if (tileData.key) {
+				this.setTimeout(delay, () => {
+					this.unlockChest();
+					this.addScore(GameData.keyScore, tileData.pos, tileData.type);
+				});
 			}
 
 			if (tileData.effect != TileEffect.NONE && direction != Direction.Center) {
@@ -487,7 +586,7 @@ class GridModel extends BaseModel {
 	private shakeTile(tileData: TileData, src: Vector2, delay: number = 0): void {
 		this.setTimeout(delay, () => {
 			this.applyFunc(GridCmd.TILE_SHAKE, tileData, src);
-			if(!this._isShake){
+			if (!this._isShake) {
 				this.applyFunc(GridCmd.SHAKE);
 				this._isShake = true;
 			}
@@ -635,6 +734,7 @@ class GridModel extends BaseModel {
 	 * 设置状态
 	 */
 	private setState(state: GridState) {
+		if (this.isState(GridState.Over)) return;
 		this._state = state;
 	}
 
@@ -663,7 +763,7 @@ class GridModel extends BaseModel {
 	 * 移动时间
 	 */
 	private get moveTime(): number {
-		return 400;
+		return 450;
 	}
 
 	/**
@@ -689,5 +789,6 @@ enum GridState {
 	Idle,
 	Select,
 	Remove,
-	REPAIR
+	Repair,
+	Over
 }

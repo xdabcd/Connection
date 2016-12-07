@@ -10,6 +10,8 @@ var TileData = (function () {
         /** 消失效果 */
         this.removeFx = TileRemoveFx.Smoke;
         this.info = null;
+        /** 钥匙 */
+        this.key = false;
     }
     var d = __define,c=TileData,p=c.prototype;
     p.clone = function () {
@@ -18,6 +20,7 @@ var TileData = (function () {
         data.type = this.type;
         data.effect = this.effect;
         data.info = this.info;
+        data.key = this.key;
         return data;
     };
     return TileData;

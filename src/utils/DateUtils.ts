@@ -11,7 +11,7 @@ class DateUtils {
      * @return
      *
      */
-    public getFormatBySecond(second: number,type: number = 1): string {
+    public static getFormatBySecond(second: number,type: number = 1): string {
         var str: string = "";
         switch(type) {
             case 1:
@@ -34,7 +34,7 @@ class DateUtils {
     }
 
     //1: 00:00:00
-    private getFormatBySecond1(t: number = 0): string {
+    private static getFormatBySecond1(t: number = 0): string {
         var hourst: number = Math.floor(t / 3600);
         var hours: string;
         if(hourst == 0) {
@@ -67,7 +67,7 @@ class DateUtils {
     }
 
     //3: 00:00
-    private getFormatBySecond3(t: number = 0): string {
+    private static getFormatBySecond3(t: number = 0): string {
         var hourst: number = Math.floor(t / 3600);
         var minst: number = Math.floor((t - hourst * 3600) / 60);
         var secondt: number = Math.floor((t - hourst * 3600) % 60);
@@ -91,7 +91,7 @@ class DateUtils {
     }
 
     //2:yyyy-mm-dd h:m:s
-    private getFormatBySecond2(time: number): string {
+    private static getFormatBySecond2(time: number): string {
         var date: Date = new Date(time);
         var year: number = date.getFullYear();
         var month: number = date.getMonth() + 1; 	//返回的月份从0-11；
@@ -104,7 +104,7 @@ class DateUtils {
     }
 
     //4:xx天前，xx小时前，xx分钟前
-    private getFormatBySecond4(time: number): string {
+    private static getFormatBySecond4(time: number): string {
         var t = Math.floor(time / 3600);
         if(t > 0) {
             if(t > 24) {
@@ -119,7 +119,7 @@ class DateUtils {
         }
     }
 
-    private getFormatBySecond5(time: number): string {
+    private static getFormatBySecond5(time: number): string {
         //每个时间单位所对应的秒数
         var oneDay: number = 3600 * 24;
         var oneHourst: number = 3600;
