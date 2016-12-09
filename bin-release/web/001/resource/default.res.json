@@ -1,19 +1,29 @@
 {
 	"groups": [
 		{
-			"keys": "times_bg_png,time_progress_png,time_bg_png,score_bg_png,item_4_png,item_3_png,item_2_png,item_1_png,hint_png,gem_bg_2_png,gem_4_png,gem_4_s_png,gem_4_l_png,gem_3_png,gem_3_s_png,gem_3_l_png,gem_2_png,gem_2_s_png,gem_2_l_png,gem_1_png,gem_1_s_png,gem_1_l_png,chest_bg_png,btn_pause_png,arrow_png,bg_png,grid_border_2_png,grid_border_1_png,grid_bg_png,gem_bg_1_png,fireparticle_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,smoke_png,smoke_json,grid_bottom_png,storm_json,storm_png,thunderstar_png,thunder_png,thunder_json,Cookies_ttf,chest_png,chest_open_png,time_start_png",
+			"keys": "fireparticle_png,items_in_json,items_in_png,smoke_json,smoke_png,storm_json,storm_png,thunder_json,thunder_png,thunderstar_png,time_select_json,time_select_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,arrow_png,bg_png,btn_pause_png,chest_bg_png,chest_open_png,chest_png,gem_1_l_png,gem_1_s_png,gem_1_png,gem_2_l_png,gem_2_s_png,gem_2_png,gem_3_l_png,gem_3_s_png,gem_3_png,gem_4_l_png,gem_4_s_png,gem_4_png,gem_bg_1_png,gem_bg_2_png,grid_bg_png,grid_border_1_png,grid_border_2_png,grid_bottom_png,hint_add_time_png,hint_fire_png,hint_go_png,hint_hurray_png,hint_time_start_png,hint_times_up_png,hint_unlock_png,hint_png,item_1_png,item_2_png,item_3_png,item_4_png,key_1_png,key_2_png,key_3_png,key_4_png,score_bg_1_png,score_bg_2_png,score_bg_png,select_1_png,select_2_png,select_3_png,select_4_png,time_1_png,time_2_png,time_3_png,time_4_png,time_bg_1_png,time_bg_2_png,time_bg_png,time_progress_png,times_bg_png,times_png,wood_png,door_png,door_json,hint_praise_3_png,hint_praise_2_png,hint_praise_1_png,fire0006_png,fire0005_png,fire0004_png,fire0003_png,fire0002_png,fire0001_png",
 			"name": "loading"
 		},
 		{
-			"keys": "arrow_png,smoke_json,smoke_png,storm_json,storm_png,chest_png,chest_open_png,time_start_png",
+			"keys": "Cookies_ttf,door_json,door_png,hint_praise_2_png,hint_praise_3_png,hint_praise_1_png,fire0001_png,fire0002_png,fire0003_png,fire0004_png,fire0005_png,fire0006_png",
 			"name": "preload"
 		}
 	],
 	"resources": [
 		{
+			"url": "Cookies.ttf",
+			"type": "bin",
+			"name": "Cookies_ttf"
+		},
+		{
 			"url": "assets/arrow.png",
 			"type": "image",
 			"name": "arrow_png"
+		},
+		{
+			"url": "assets/bg.png",
+			"type": "image",
+			"name": "bg_png"
 		},
 		{
 			"url": "assets/btn_pause.png",
@@ -21,9 +31,24 @@
 			"name": "btn_pause_png"
 		},
 		{
+			"url": "assets/chest.png",
+			"type": "image",
+			"name": "chest_png"
+		},
+		{
 			"url": "assets/chest_bg.png",
 			"type": "image",
 			"name": "chest_bg_png"
+		},
+		{
+			"url": "assets/chest_open.png",
+			"type": "image",
+			"name": "chest_open_png"
+		},
+		{
+			"url": "assets/gem_1.png",
+			"type": "image",
+			"name": "gem_1_png"
 		},
 		{
 			"url": "assets/gem_1_l.png",
@@ -36,9 +61,9 @@
 			"name": "gem_1_s_png"
 		},
 		{
-			"url": "assets/gem_1.png",
+			"url": "assets/gem_2.png",
 			"type": "image",
-			"name": "gem_1_png"
+			"name": "gem_2_png"
 		},
 		{
 			"url": "assets/gem_2_l.png",
@@ -51,9 +76,9 @@
 			"name": "gem_2_s_png"
 		},
 		{
-			"url": "assets/gem_2.png",
+			"url": "assets/gem_3.png",
 			"type": "image",
-			"name": "gem_2_png"
+			"name": "gem_3_png"
 		},
 		{
 			"url": "assets/gem_3_l.png",
@@ -66,9 +91,9 @@
 			"name": "gem_3_s_png"
 		},
 		{
-			"url": "assets/gem_3.png",
+			"url": "assets/gem_4.png",
 			"type": "image",
-			"name": "gem_3_png"
+			"name": "gem_4_png"
 		},
 		{
 			"url": "assets/gem_4_l.png",
@@ -81,11 +106,6 @@
 			"name": "gem_4_s_png"
 		},
 		{
-			"url": "assets/gem_4.png",
-			"type": "image",
-			"name": "gem_4_png"
-		},
-		{
 			"url": "assets/gem_bg_1.png",
 			"type": "image",
 			"name": "gem_bg_1_png"
@@ -96,9 +116,64 @@
 			"name": "gem_bg_2_png"
 		},
 		{
+			"url": "assets/grid_bg.png",
+			"type": "image",
+			"name": "grid_bg_png"
+		},
+		{
+			"url": "assets/grid_border_1.png",
+			"type": "image",
+			"name": "grid_border_1_png"
+		},
+		{
+			"url": "assets/grid_border_2.png",
+			"type": "image",
+			"name": "grid_border_2_png"
+		},
+		{
+			"url": "assets/grid_bottom.png",
+			"type": "image",
+			"name": "grid_bottom_png"
+		},
+		{
 			"url": "assets/hint.png",
 			"type": "image",
 			"name": "hint_png"
+		},
+		{
+			"url": "assets/hint_add_time.png",
+			"type": "image",
+			"name": "hint_add_time_png"
+		},
+		{
+			"url": "assets/hint_fire.png",
+			"type": "image",
+			"name": "hint_fire_png"
+		},
+		{
+			"url": "assets/hint_go.png",
+			"type": "image",
+			"name": "hint_go_png"
+		},
+		{
+			"url": "assets/hint_hurray.png",
+			"type": "image",
+			"name": "hint_hurray_png"
+		},
+		{
+			"url": "assets/hint_time_start.png",
+			"type": "image",
+			"name": "hint_time_start_png"
+		},
+		{
+			"url": "assets/hint_times_up.png",
+			"type": "image",
+			"name": "hint_times_up_png"
+		},
+		{
+			"url": "assets/hint_unlock.png",
+			"type": "image",
+			"name": "hint_unlock_png"
 		},
 		{
 			"url": "assets/item_1.png",
@@ -121,9 +196,79 @@
 			"name": "item_4_png"
 		},
 		{
+			"url": "assets/key_1.png",
+			"type": "image",
+			"name": "key_1_png"
+		},
+		{
+			"url": "assets/key_2.png",
+			"type": "image",
+			"name": "key_2_png"
+		},
+		{
+			"url": "assets/key_3.png",
+			"type": "image",
+			"name": "key_3_png"
+		},
+		{
+			"url": "assets/key_4.png",
+			"type": "image",
+			"name": "key_4_png"
+		},
+		{
 			"url": "assets/score_bg.png",
 			"type": "image",
 			"name": "score_bg_png"
+		},
+		{
+			"url": "assets/score_bg_1.png",
+			"type": "image",
+			"name": "score_bg_1_png"
+		},
+		{
+			"url": "assets/score_bg_2.png",
+			"type": "image",
+			"name": "score_bg_2_png"
+		},
+		{
+			"url": "assets/select_1.png",
+			"type": "image",
+			"name": "select_1_png"
+		},
+		{
+			"url": "assets/select_2.png",
+			"type": "image",
+			"name": "select_2_png"
+		},
+		{
+			"url": "assets/select_3.png",
+			"type": "image",
+			"name": "select_3_png"
+		},
+		{
+			"url": "assets/select_4.png",
+			"type": "image",
+			"name": "select_4_png"
+		},
+		{
+			"url": "assets/time_1.png",
+			"type": "image",
+			"name": "time_1_png"
+		},
+		{
+			"url": "assets/time_2.png",
+			"type": "image",
+			"name": "time_2_png"
+		},
+		{
+			"url": "assets/time_3.png",
+			"type": "image",
+			"name": "time_3_png"
+		},
+		{
+			"url": "assets/time_4.png",
+			"type": "image",
+			"name": "time_4_png"
 		},
 		{
 			"url": "assets/time_bg.png",
@@ -131,9 +276,24 @@
 			"name": "time_bg_png"
 		},
 		{
+			"url": "assets/time_bg_1.png",
+			"type": "image",
+			"name": "time_bg_1_png"
+		},
+		{
+			"url": "assets/time_bg_2.png",
+			"type": "image",
+			"name": "time_bg_2_png"
+		},
+		{
 			"url": "assets/time_progress.png",
 			"type": "image",
 			"name": "time_progress_png"
+		},
+		{
+			"url": "assets/times.png",
+			"type": "image",
+			"name": "times_png"
 		},
 		{
 			"url": "assets/times_bg.png",
@@ -141,30 +301,9 @@
 			"name": "times_bg_png"
 		},
 		{
-			"url": "assets/bg.png",
+			"url": "assets/wood.png",
 			"type": "image",
-			"name": "bg_png"
-		},
-		{
-			"url": "assets/grid_bg.png",
-			"type": "image",
-			"name": "grid_bg_png",
-			"scale9grid": "6,7,8,5"
-		},
-		{
-			"url": "assets/grid_border_1.png",
-			"type": "image",
-			"name": "grid_border_1_png"
-		},
-		{
-			"url": "assets/grid_border_2.png",
-			"type": "image",
-			"name": "grid_border_2_png"
-		},
-		{
-			"url": "assets/grid_bottom.png",
-			"type": "image",
-			"name": "grid_bottom_png"
+			"name": "wood_png"
 		},
 		{
 			"url": "assets/anim/fireparticle.png",
@@ -172,39 +311,14 @@
 			"name": "fireparticle_png"
 		},
 		{
-			"url": "assets/anim/watercenter.png",
+			"url": "assets/anim/items_in.png",
 			"type": "image",
-			"name": "watercenter_png"
-		},
-		{
-			"url": "assets/anim/waterend.png",
-			"type": "image",
-			"name": "waterend_png"
-		},
-		{
-			"url": "assets/anim/waterspout.png",
-			"type": "image",
-			"name": "waterspout_png"
-		},
-		{
-			"url": "assets/anim/watercenter.json",
-			"type": "json",
-			"name": "watercenter_json"
-		},
-		{
-			"url": "assets/anim/smoke.json",
-			"type": "json",
-			"name": "smoke_json"
+			"name": "items_in_png"
 		},
 		{
 			"url": "assets/anim/smoke.png",
 			"type": "image",
 			"name": "smoke_png"
-		},
-		{
-			"url": "assets/anim/storm.json",
-			"type": "json",
-			"name": "storm_json"
 		},
 		{
 			"url": "assets/anim/storm.png",
@@ -222,29 +336,109 @@
 			"name": "thunderstar_png"
 		},
 		{
+			"url": "assets/anim/time_select.png",
+			"type": "image",
+			"name": "time_select_png"
+		},
+		{
+			"url": "assets/anim/watercenter.png",
+			"type": "image",
+			"name": "watercenter_png"
+		},
+		{
+			"url": "assets/anim/waterend.png",
+			"type": "image",
+			"name": "waterend_png"
+		},
+		{
+			"url": "assets/anim/waterspout.png",
+			"type": "image",
+			"name": "waterspout_png"
+		},
+		{
+			"url": "assets/anim/items_in.json",
+			"type": "json",
+			"name": "items_in_json"
+		},
+		{
+			"url": "assets/anim/smoke.json",
+			"type": "json",
+			"name": "smoke_json"
+		},
+		{
 			"url": "assets/anim/thunder.json",
 			"type": "json",
 			"name": "thunder_json"
 		},
 		{
-			"url": "Cookies.ttf",
-			"type": "bin",
-			"name": "Cookies_ttf"
+			"url": "assets/anim/storm.json",
+			"type": "json",
+			"name": "storm_json"
 		},
 		{
-			"url": "assets/chest.png",
-			"type": "image",
-			"name": "chest_png"
+			"url": "assets/anim/time_select.json",
+			"type": "json",
+			"name": "time_select_json"
 		},
 		{
-			"url": "assets/chest_open.png",
-			"type": "image",
-			"name": "chest_open_png"
+			"url": "assets/anim/watercenter.json",
+			"type": "json",
+			"name": "watercenter_json"
 		},
 		{
-			"url": "assets/time_start.png",
+			"url": "assets/anim/door.json",
+			"type": "json",
+			"name": "door_json"
+		},
+		{
+			"url": "assets/anim/door.png",
 			"type": "image",
-			"name": "time_start_png"
+			"name": "door_png"
+		},
+		{
+			"url": "assets/hint_praise_2.png",
+			"type": "image",
+			"name": "hint_praise_2_png"
+		},
+		{
+			"url": "assets/hint_praise_3.png",
+			"type": "image",
+			"name": "hint_praise_3_png"
+		},
+		{
+			"url": "assets/hint_praise_1.png",
+			"type": "image",
+			"name": "hint_praise_1_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0001.png",
+			"type": "image",
+			"name": "fire0001_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0002.png",
+			"type": "image",
+			"name": "fire0002_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0003.png",
+			"type": "image",
+			"name": "fire0003_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0004.png",
+			"type": "image",
+			"name": "fire0004_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0005.png",
+			"type": "image",
+			"name": "fire0005_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0006.png",
+			"type": "image",
+			"name": "fire0006_png"
 		}
 	]
 }

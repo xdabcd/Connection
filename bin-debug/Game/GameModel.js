@@ -16,6 +16,7 @@ var GameModel = (function (_super) {
     p.start = function () {
         var _this = this;
         this._updateTime = false;
+        this._isFire = false;
         this.setTimeout(300, function () { return _this.showTimeStart(); });
         this.setTimeout(1200, function () {
             _this.initTime();
@@ -26,21 +27,52 @@ var GameModel = (function (_super) {
             _this.showGO();
         });
         this._score = 0;
-        this._times = 1;
+        this._times = 0;
         this.updateScore();
-        this.updateTimes();
+    };
+    /**
+     * 进入爆炸模式
+     */
+    p.fire = function () {
+        this._isFire = true;
+        this._fireTime = 10;
+    };
+    /**
+     * 爆炸模式结束
+     */
+    p.fireOver = function () {
+        this._isFire = false;
+        this.applyControllerFunc(ControllerID.Grid, GameCmd.FIRE_OVER);
     };
     /**
      * 添加得分
      */
-    p.addScore = function (score) {
+    p.addScore = function (delay, score, callBack) {
         var _this = this;
-        score *= this._times;
-        this.setTimeout(1200, function () {
+        score *= this._times + (this._isFire ? 10 : 0);
+        this.setTimeout(delay + 1200, function () {
             _this._score += score;
             _this.updateScore(true);
         });
-        return score;
+        this.setTimeout(delay, function () { return callBack(score); });
+    };
+    /**
+     * 增加时间
+     */
+    p.addTime = function () {
+        var _this = this;
+        this.setTimeout(500, function () {
+            _this._countdown += 5;
+        });
+        return 5;
+    };
+    /**
+     * 增加倍率
+     */
+    p.addTimes = function (delay, callBack) {
+        var _this = this;
+        this._times += 1;
+        this.setTimeout(delay, function () { return callBack(_this._times); });
     };
     /**
      * 更新
@@ -48,12 +80,20 @@ var GameModel = (function (_super) {
     p.update = function (delta) {
         _super.prototype.update.call(this, delta);
         if (this._updateTime) {
-            this._countdown -= delta / 1000;
-            this.updateTime();
-            if (this._countdown <= 0) {
-                this.gameOver();
-                this._updateTime = false;
+            if (this._isFire) {
+                this._fireTime -= delta / 1000;
+                if (this._fireTime <= 0) {
+                    this.fireOver();
+                }
             }
+            else {
+                this._countdown -= delta / 1000;
+                if (this._countdown <= 0) {
+                    this.gameOver();
+                    this._updateTime = false;
+                }
+            }
+            this.updateTime();
         }
     };
     /**
@@ -86,12 +126,6 @@ var GameModel = (function (_super) {
     p.updateScore = function (isAdd) {
         if (isAdd === void 0) { isAdd = false; }
         this.applyFunc(GameCmd.UPDATE_SCORE, this._score, isAdd);
-    };
-    /**
-     * 更新倍数
-     */
-    p.updateTimes = function () {
-        this.applyFunc(GameCmd.UPDATE_TIMES, this._times);
     };
     /**
      * 游戏结束

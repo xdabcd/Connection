@@ -26,14 +26,22 @@ var Fx = (function (_super) {
     p.play = function () {
         this.visible = true;
     };
+    p.stopAtFirstFrame = function () {
+        this.visible = true;
+    };
     p.setCallBack = function (func) {
         this._callBack = func;
     };
     p.onComplete = function () {
         this.visible = false;
+        this.destroy();
         if (this._callBack) {
             this._callBack();
         }
+    };
+    p.destroy = function () {
+        DisplayUtils.removeFromParent(this);
+        ObjectPool.push(this);
     };
     return Fx;
 }(egret.Sprite));

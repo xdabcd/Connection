@@ -15,6 +15,12 @@ class TileData {
     public info = null;
     /** 钥匙 */
     public key: boolean = false;
+    /** 时间 */
+    public time: boolean = false;
+    /** 倍数 */
+    public times: number = 0;
+    /** 燃烧状态 */
+    public isFire: boolean = false;
 
     public clone(): TileData {
         var data = new TileData();
@@ -23,6 +29,9 @@ class TileData {
         data.effect = this.effect;
         data.info = this.info;
         data.key = this.key;
+        data.time = this.time;
+        data.times = this.times;
+        data.isFire = this.isFire;
         return data;
     }
 }
@@ -37,5 +46,6 @@ enum TileEffect {
 
 enum TileRemoveFx {
     Smoke = 0,
-    Thunder = 1
+    Bomb = 1,
+    Thunder = 3
 }

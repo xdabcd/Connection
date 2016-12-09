@@ -14,10 +14,14 @@ var GameController = (function (_super) {
         this.registerFunc(GameCmd.SHOW_TIME_START, this.showTimeStart, this);
         this.registerFunc(GameCmd.TIME_INIT, this.initTime, this);
         this.registerFunc(GameCmd.SHOW_GO, this.showGO, this);
+        this.registerFunc(GameCmd.SHOW_UNLOCK, this.showUnlock, this);
+        this.registerFunc(GameCmd.SHOW_PRAISE, this.showPraise, this);
         this.registerFunc(GameCmd.UPDATE_TIME, this.updateTime, this);
         this.registerFunc(GameCmd.UPDATE_SCORE, this.updateScore, this);
-        this.registerFunc(GameCmd.UPDATE_TIMES, this.updateTimes, this);
+        this.registerFunc(GameCmd.ADD_TIMES, this.addTimes, this);
+        this.registerFunc(GameCmd.FIRE, this.fire, this);
         this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
+        this.registerFunc(GameCmd.ADD_TIME, this.addTime, this);
     }
     var d = __define,c=GameController,p=c.prototype;
     /**
@@ -45,10 +49,29 @@ var GameController = (function (_super) {
         this.scene.initTime(top);
     };
     /**
+     * 进入爆炸模式
+     */
+    p.fire = function () {
+        this.model.fire();
+        this.scene.showFire();
+    };
+    /**
+     * 显示解锁
+     */
+    p.showUnlock = function () {
+        this.scene.showUnlock();
+    };
+    /**
      * 显示GO
      */
     p.showGO = function () {
         this.scene.showGO();
+    };
+    /**
+     * 显示称赞
+     */
+    p.showPraise = function (type) {
+        this.scene.showPraise(type);
     };
     /**
      * 更新倒计时
@@ -64,16 +87,34 @@ var GameController = (function (_super) {
         this.scene.updateScore(score, isAdd);
     };
     /**
-     * 更新倍数
+     * 增加倍率
      */
-    p.updateTimes = function (times) {
-        this.scene.updateTimes(times);
+    p.addTimes = function (delay, pos, ts) {
+        var _this = this;
+        this.model.addTimes(delay, function (times) {
+            if (pos) {
+                _this.scene.addTimes(times, pos, ts);
+            }
+            else {
+                _this.scene.updateTimes(times);
+            }
+        });
     };
     /**
      * 添加得分
      */
-    p.addScore = function (score, pos, type) {
-        this.scene.showScore(this.model.addScore(score), pos, type);
+    p.addScore = function (delay, score, pos, type) {
+        var _this = this;
+        this.model.addScore(delay, score, function (score) {
+            _this.scene.showScore(score, pos, type);
+        });
+    };
+    /**
+     * 添加时间
+     */
+    p.addTime = function () {
+        this.model.addTime();
+        this.scene.showAddTime();
     };
     d(p, "model"
         /**

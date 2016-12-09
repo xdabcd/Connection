@@ -13,12 +13,14 @@ class Grid extends BaseScene {
 	private _gridCon: egret.DisplayObjectContainer;
 	private _arrowCon: egret.DisplayObjectContainer;
 	private _tileCon: egret.DisplayObjectContainer;
+	private _topTileCon: egret.DisplayObjectContainer;
 	private _fxCon: egret.DisplayObjectContainer;
 	private _hitCon: egret.DisplayObjectContainer;
 	private _arrows: Array<Arrow>;
 	private _select: egret.Bitmap;
-
+	private _bm: egret.Sprite;
 	private _chests: Chests;
+	private _fire: FireFx;
 
 	public constructor() {
         super();
@@ -81,12 +83,24 @@ class Grid extends BaseScene {
 		this._container.addChild(this._gridCon = new egret.DisplayObjectContainer);
 		this.initGrid();
 
+		this._container.addChild(this._fire = new FireFx);
+		this._fire.x = this.width / 2;
+		this._fire.y = this.height;
+		this._fire.alpha = 0.7;
+		this._fire.visible = false;
+
 		this._container.addChild(this._arrowCon = new egret.DisplayObjectContainer);
 		this._arrows = [];
 
         this._container.addChild(this._tileCon = new egret.DisplayObjectContainer);
 		this._container.addChild(this._fxCon = new egret.DisplayObjectContainer);
 		this._container.addChild(this._hitCon = new egret.DisplayObjectContainer);
+		this._container.addChild(this._bm = new egret.Sprite);
+		this._container.addChild(this._topTileCon = new egret.DisplayObjectContainer);
+
+		DrawUtils.drawRect(this._bm, this.width, this.height, 0);
+		this._bm.touchEnabled = true;
+		this._bm.visible = false;
 
 		this.touchEnabled = true;
        	this.stage.addEventListener(egret.TouchEvent.TOUCH_END, this.onEnd, this);
@@ -126,11 +140,62 @@ class Grid extends BaseScene {
 	 * 隐藏宝箱
 	 */
 	public hideChests() {
+		this._bm.visible = true;
+		this._bm.alpha = 0;
+		var tw1 = new Tween(this._bm);
+		tw1.to = { alpha: 0.6 };
+		tw1.duration = 200;
+		tw1.start();
+		var tw2 = new Tween(this._bm);
+		tw2.to = { alpha: 0 };
+		tw2.duration = 200;
+		tw2.delay = 1000;
+		tw2.callBack = () => {
+			this._bm.visible = false;
+		}
+		tw2.start();
+
 		var tw = new Tween(this._chests);
 		tw.to = { y: this.height + this._chests.height + 10 };
 		tw.duration = 600;
 		tw.ease = TweenEase.CusIn;
 		tw.start();
+	}
+
+	/**
+	 * 解锁宝箱
+	 */
+	public unlockChest(pos: Vector2, type: number) {
+		var tp = this.getTruePosition(pos.x, pos.y);
+		this._chests.unlock(tp.x - this._chests.x + this._chests.anchorOffsetX,
+			tp.y - this._chests.y + this._chests.anchorOffsetY, type);
+	}
+
+	/**
+	 * 新增一行
+	 */
+	public newRow(arr: Array<TileData>) {
+		for (let i = 0; i < arr.length; i++) {
+			let tile = this.findTile(arr[i].pos);
+			if (tile) {
+				this._topTileCon.addChild(tile);
+			}
+		}
+	}
+
+	/**
+	 * 显示爆炸模式
+	 */
+	public showFire() {
+		this._fire.visible = true;
+		this._fire.play();
+	}
+
+	/**
+	 * 隐藏爆炸模式
+	 */
+	public hideFire() {
+		this._fire.visible = false;
 	}
 
 	/**
@@ -147,6 +212,8 @@ class Grid extends BaseScene {
 		tile.type = tileData.type;
 		tile.effect = tileData.effect;
 		tile.key = tileData.key;
+		tile.time = tileData.time;
+		tile.times = tileData.times;
 		tile.touchEnabled = true;
 		tile.addTo(this._tileCon);
 		tile.setOnTouch(() => { this.tileOnTouch(tile.pos); });
@@ -158,6 +225,9 @@ class Grid extends BaseScene {
 	public removeTile(tileData: TileData, duration: number) {
 		var tile = this.findTile(tileData.pos);
 		if (tile) {
+			if (tile.parent != this._tileCon) {
+				this._tileCon.addChild(tile);
+			}
 			if (tileData.effect != TileEffect.NONE) {
 				this.addEffect(tileData.effect, tile.x, tile.y);
 			} else {
@@ -173,7 +243,6 @@ class Grid extends BaseScene {
 	public hitTile(tileData: TileData, duration: number, direction: Direction) {
 		var tile = this.findTile(tileData.pos);
 		if (tile) {
-			this._tileCon.removeChild(tile);
 			this._hitCon.addChild(tile);
 			tile.hit(direction, duration);
 		}
@@ -212,6 +281,7 @@ class Grid extends BaseScene {
 		tw6.duration = t;
 		tw6.delay = tw5.duration + tw5.delay + t * 2;
 		tw6.start();
+		this._chests.shake();
 	}
 
 	/**
@@ -262,13 +332,13 @@ class Grid extends BaseScene {
 				this._select.alpha = 0.5;
 				this._select.scaleX = this._select.scaleY = 0.4;
 				var tw1 = new Tween(this._select);
-				tw1.to = { scaleX: 1, scaleY: 1, alpha: 1 };
+				tw1.to = { scaleX: 1 + (type - 1) * 0.25, scaleY: 1 + (type - 1) * 0.25, alpha: 1 };
 				tw1.duration = 300;
 				tw1.ease = TweenEase.CusOut;
 				tw1.start();
 				var tw2 = new Tween(this._select);
 				tw2.to = { rotation: 360 };
-				tw2.duration = 3000;
+				tw2.duration = 2000;
 				tw2.delay = tw1.duration;
 				tw2.loop = true;
 				tw2.start();
@@ -350,6 +420,16 @@ class Grid extends BaseScene {
 	}
 
 	/**
+	 * 改变格子倍率
+	 */
+	public changeTileTimes(tileData: TileData) {
+		var tile = this.findTile(tileData.pos);
+		if (tile) {
+			tile.times = tileData.times;
+		}
+	}
+
+	/**
 	 * 添加消失特效
 	 */
 	public addRemoveFx(removeFx: TileRemoveFx, x: number, y: number) {
@@ -357,6 +437,9 @@ class Grid extends BaseScene {
 		switch (removeFx) {
 			case TileRemoveFx.Smoke:
 				fx = ObjectPool.pop("SmokeFx") as SmokeFx;
+				break;
+			case TileRemoveFx.Bomb:
+				fx = ObjectPool.pop("BombFx") as BombFx;
 				break;
 			case TileRemoveFx.Thunder:
 				fx = ObjectPool.pop("ThunderFx") as ThunderFx;
@@ -439,6 +522,12 @@ class Grid extends BaseScene {
 	private findTile(pos): Tile {
 		for (let i = 0; i < this._tileCon.numChildren; i++) {
 			var tile = this._tileCon.getChildAt(i) as Tile;
+			if (tile.pos.equalTo(pos)) {
+				return tile;
+			}
+		}
+		for (let i = 0; i < this._topTileCon.numChildren; i++) {
+			var tile = this._topTileCon.getChildAt(i) as Tile;
 			if (tile.pos.equalTo(pos)) {
 				return tile;
 			}

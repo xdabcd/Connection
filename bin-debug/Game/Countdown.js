@@ -60,21 +60,33 @@ var Countdown = (function (_super) {
     var d = __define,c=Countdown,p=c.prototype;
     p.init = function (top) {
         this._topTime = top;
-        this.setTime(top);
+        this._curTime = top;
+        this._isInit = true;
     };
     p.update = function (delta) {
         var cur = this._curTime ? this._curTime : 0;
         var top = this._topTime ? this._topTime : 1;
         var cp = cur / top;
         var per = this._per ? this._per : 0;
+        var as = delta / 5000;
+        if (this._isInit) {
+            as *= 10;
+        }
         cp = Math.max(0, cp);
         this.setProgressBg(cp);
-        per = Math.min(cp, per + delta / 500, 1);
+        per = Math.min(cp, per + as, 1);
         this.setProgress(per);
         this._per = per;
+        if (this._isInit) {
+            this.setText(top * per);
+        }
+        else {
+            this.setText(top * cp);
+        }
     };
     p.setTime = function (time) {
         this._curTime = time;
+        this._isInit = false;
     };
     p.over = function () {
         var _this = this;
@@ -103,16 +115,16 @@ var Countdown = (function (_super) {
     };
     p.setProgress = function (per) {
         this._timeMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
-        var top = this._topTime ? this._topTime : 1;
-        var time = Math.round(top * per);
+    };
+    p.setProgressBg = function (per) {
+        this._bgMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
+    };
+    p.setText = function (time) {
         if (time <= 3 && time > 0 && parseInt(this._ct) > time) {
             this.blink();
         }
         this._ct = time.toString();
         this._text.text = DateUtils.getFormatBySecond(time, 3);
-    };
-    p.setProgressBg = function (per) {
-        this._bgMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
     };
     p.blink = function () {
         this._textMask.alpha = 1;

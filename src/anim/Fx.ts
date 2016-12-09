@@ -32,14 +32,24 @@ class Fx extends egret.Sprite {
         this.visible = true;
     }
 
+    public stopAtFirstFrame() {
+        this.visible = true;
+    }
+
     public setCallBack(func: Function) {
         this._callBack = func;
     }
 
     protected onComplete() {
         this.visible = false;
+        this.destroy();
         if (this._callBack) {
             this._callBack();
         }
+    }
+
+    public destroy() {
+        DisplayUtils.removeFromParent(this);
+        ObjectPool.push(this);
     }
 }

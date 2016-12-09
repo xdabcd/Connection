@@ -10,11 +10,14 @@ class Tile extends egret.DisplayObjectContainer {
         this.addChild(this._con = new egret.DisplayObjectContainer);
         this._con.addChild(this._icon = new egret.Bitmap);
         this._con.addChild(this._key = new egret.Bitmap);
+        this.addChild(this._times = new Times);
+
         this.addTouch();
-        AnchorUtils.setAnchor(this._con, 0.5);
         AnchorUtils.setAnchor(this._signIcon, 0.5);
     }
 
+    /** 触摸范围 */
+    private _touchObj: egret.Sprite;
     /** 触摸回调 */
     private _callBack: Function;
     /** 容器 */
@@ -23,6 +26,10 @@ class Tile extends egret.DisplayObjectContainer {
     private _icon: egret.Bitmap;
     /** 钥匙 */
     private _key: egret.Bitmap;
+    /** 倍数 */
+    private _times: Times;
+    /** 时间动画 */
+    private _timeFx: Fx;
     /** 标记 */
     private _signIcon: egret.Bitmap;
     /** 位置 */
@@ -31,9 +38,12 @@ class Tile extends egret.DisplayObjectContainer {
     private _type: number;
     /** 效果 */
     private _effect: TileEffect;
+    /** 时间 */
+    private _time: boolean;
     /** 是否被选中 */
     private _isSelect: boolean;
     private _isShake: boolean;
+    private _showKey: boolean;
 
     /**
      * 重置
@@ -46,7 +56,7 @@ class Tile extends egret.DisplayObjectContainer {
         this.rotation = 0;
         this._signIcon.visible = false;
         this._isSelect = false;
-        this.touchEnabled = true;
+        this._touchObj.touchEnabled = true;
         this._isShake = false;
     }
 
@@ -54,8 +64,11 @@ class Tile extends egret.DisplayObjectContainer {
      * 添加触摸
      */
     private addTouch() {
-        this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
-        this.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
+        this.addChild(this._touchObj = new egret.Sprite);
+        DrawUtils.drawCircle(this._touchObj, 35, 0);
+        this._touchObj.alpha = 0;
+        this._touchObj.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
+        this._touchObj.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
     }
 
     /**
@@ -65,6 +78,14 @@ class Tile extends egret.DisplayObjectContainer {
         if (this._callBack) {
             this._callBack();
         }
+    }
+
+    /**
+     * 设置图标
+     */
+    private setIcon(iconName: string) {
+        this._icon.texture = RES.getRes(iconName);
+        AnchorUtils.setAnchor(this._icon, 0.5);
     }
 
     /**
@@ -99,7 +120,6 @@ class Tile extends egret.DisplayObjectContainer {
             this.addChild(fx);
             fx.setCallBack(() => {
                 this._icon.visible = true;
-                this.removeChild(fx);
             });
             fx.play();
         }
@@ -124,42 +144,59 @@ class Tile extends egret.DisplayObjectContainer {
      * 选中
      */
     public select(hl: boolean) {
-        if (!this._isSelect) {
-            var duration = 500;
-            var delay = 0;
-            var tw = (a: number, t: number, callBack: Function = null) => {
-                var tw1 = new Tween(this._con);
-                tw1.to = {
-                    rotation: a
-                };
-                tw1.duration = t;
-                tw1.delay = delay;
-                tw1.callBack = callBack;
-                tw1.start();
-                delay += t;
+        if (this._time) {
+            if (hl) {
+                this._timeFx.play();
+            } else {
+                this._timeFx.stopAtFirstFrame();
             }
-            this._con.rotation = 170;
-            tw(10, duration * 0.5);
-            tw(-10, delay * 0.25);
-            tw(5, duration * 0.2);
-            tw(0, duration * 0.05);
+            this._timeFx.visible = true;
+            this._icon.visible = false;
+        } else if (this._effect > 0) {
+
+        } else {
+            if (!this._isSelect) {
+                var duration = 500;
+                var delay = 0;
+                var tw = (a: number, t: number, callBack: Function = null) => {
+                    var tw1 = new Tween(this._con);
+                    tw1.to = {
+                        rotation: a
+                    };
+                    tw1.duration = t;
+                    tw1.delay = delay;
+                    tw1.callBack = callBack;
+                    tw1.start();
+                    delay += t;
+                }
+                this._con.rotation = 170;
+                tw(10, duration * 0.5);
+                tw(-10, delay * 0.25);
+                tw(5, duration * 0.2);
+                tw(0, duration * 0.05);
+            }
+            if (hl) {
+                this.setIcon("gem_" + this._type + "_l_png");
+            } else {
+                this.setIcon("gem_" + this._type + "_s_png");
+            }
         }
         this._isSelect = true;
-        if (this._type == 0) return;
-        if (hl) {
-            this._icon.texture = RES.getRes("gem_" + this._type + "_l_png");
-        } else {
-            this._icon.texture = RES.getRes("gem_" + this._type + "_s_png");
-        }
     }
 
 	/**
      * 取消选中
      */
     public unselect() {
+        if (this._time) {
+            this._timeFx.visible = false;
+            this._icon.visible = true;
+        } else if (this._effect > 0) {
+
+        } else {
+            this.setIcon("gem_" + this._type + "_png");
+        }
         this._isSelect = false;
-        if (this._type == 0) return;
-        this._icon.texture = RES.getRes("gem_" + this._type + "_png");
     }
 
     /**
@@ -178,9 +215,8 @@ class Tile extends egret.DisplayObjectContainer {
         };
         tween.start();
 
-        switch (this._effect) {
-
-        }
+        this._times.visible = false;
+        this._key.visible = false;
     }
 
     /**
@@ -231,6 +267,9 @@ class Tile extends egret.DisplayObjectContainer {
         };
         tween.duration = 1200;
         tween.start();
+
+        this._times.visible = false;
+        this._key.visible = false;
     }
 
     /**
@@ -274,7 +313,7 @@ class Tile extends egret.DisplayObjectContainer {
     private unEnable() {
         this._signIcon.visible = false;
         this.pos = new Vector2(0, 100);
-        this.touchEnabled = false;
+        this._touchObj.touchEnabled = false;
     }
 
 	/**
@@ -310,7 +349,15 @@ class Tile extends egret.DisplayObjectContainer {
             }
         }
         tw.duration = duration;
-        tw.callBack = callBack;
+        tw.callBack = () => {
+            callBack();
+            if (this._showKey) {
+                var fx = ObjectPool.pop("KeyInFx") as KeyInFx;
+                this.addChild(fx);
+                fx.play();
+                this._showKey = false;
+            }
+        };
         tw.start();
     }
 
@@ -320,7 +367,7 @@ class Tile extends egret.DisplayObjectContainer {
     public set type(value: number) {
         this._type = value;
         if (this._type == 0) return;
-        this._icon.texture = RES.getRes("gem_" + value + "_png");
+        this.setIcon("gem_" + value + "_png");
     }
 
     /**
@@ -329,18 +376,61 @@ class Tile extends egret.DisplayObjectContainer {
     public set effect(value: TileEffect) {
         this._effect = value;
         if (this._effect == TileEffect.NONE) return;
-        this._icon.texture = RES.getRes("item_" + value + "_png");
+        this.setIcon("item_" + value + "_png");
     }
 
     /**
      * 设置钥匙
      */
     public set key(value: boolean) {
+        this._showKey = value;
         if (value) {
             this._key.visible = true;
             this._key.texture = RES.getRes("key_" + this._type + "_png");
+            AnchorUtils.setAnchor(this._key, 0.5);
         } else {
             this._key.visible = false;
+        }
+    }
+
+    /**
+     * 设置时间
+     */
+    public set time(value: boolean) {
+        this._time = value;
+        if (this._timeFx) {
+            this._timeFx.destroy();
+        }
+        if (this._time) {
+            this.setIcon("time_" + this._type + "_png");
+            switch (this._type) {
+                case 1:
+                    this._timeFx = ObjectPool.pop("TimeRedSelectFx") as TimeRedSelectFx;
+                    break;
+                case 2:
+                    this._timeFx = ObjectPool.pop("TimeBlueSelectFx") as TimeBlueSelectFx;
+                    break;
+                case 3:
+                    this._timeFx = ObjectPool.pop("TimeYellowSelectFx") as TimeYellowSelectFx;
+                    break;
+                case 4:
+                    this._timeFx = ObjectPool.pop("TimeGreenSelectFx") as TimeGreenSelectFx;
+                    break;
+            }
+            this.addChild(this._timeFx);
+            this._timeFx.visible = false;
+        }
+    }
+
+    /**
+     * 设置倍数
+     */
+    public set times(value: number) {
+        if (value) {
+            this._times.visible = true;
+            this._times.setTimes(value);
+        } else {
+            this._times.visible = false;
         }
     }
 

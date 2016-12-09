@@ -17,6 +17,7 @@ class GameScene extends BaseScene {
     private _countdown: Countdown;
     private _grid: Grid;
     private _scoreCon: egret.DisplayObjectContainer;
+    private _timesCon: egret.DisplayObjectContainer;
 
     private _hintCon: egret.DisplayObjectContainer;
 
@@ -54,6 +55,7 @@ class GameScene extends BaseScene {
         this.addChild(this._countdown = new Countdown);
 
         this.addChild(this._scoreCon = new egret.DisplayObjectContainer);
+        this.addChild(this._timesCon = new egret.DisplayObjectContainer);
         this.addChild(this._hintCon = new egret.DisplayObjectContainer);
     }
 
@@ -200,6 +202,47 @@ class GameScene extends BaseScene {
     }
 
     /**
+     * 添加倍数
+     */
+    public addTimes(times: number, pos: Vector2, ts: number) {
+        var tr = this._grid.getAbsPosition(pos.x, pos.y);
+        var t = ObjectPool.pop("Times") as Times;
+        t.setTimes(ts);
+        this._timesCon.addChild(t);
+        t.x = tr.x;
+        t.y = tr.y;
+        var tw1 = new Tween(t);
+        tw1.to = { y: this._times.y + 5 };
+        tw1.duration = 600;
+        tw1.start();
+        var tw2 = new Tween(t);
+        tw2.to = { x: this._times.x };
+        tw2.duration = 600;
+        tw2.ease = TweenEase.QuadOut;
+        tw2.start();
+        var tw3 = new Tween(t);
+        tw3.to = { scaleY: 0.3 };
+        tw3.duration = 600;
+        tw3.ease = TweenEase.QuadOut;
+        tw3.callBack = () => {
+            t.scaleY = 1;
+            t.destroy();
+            this.updateTimes(times);
+        };
+        tw3.start();
+    }
+
+    /**
+     * 进入爆炸模式提示
+     */
+    public showFire() {
+        var hint = ObjectPool.pop("Hint") as Hint;
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_fire_png", 0.5, 0.35);
+    }
+
+    /**
 	 * 显示得分
 	 */
     public showScore(score: number, pos: Vector2, type: number) {
@@ -209,6 +252,26 @@ class GameScene extends BaseScene {
         fs.y = tp.y;
         this._scoreCon.addChild(fs);
         fs.show(score, type);
+    }
+
+    /**
+	 * 显示增加时间
+	 */
+    public showAddTime() {
+        var hint = ObjectPool.pop("Hint") as Hint;
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_add_time_png", 0.5, 0.35);
+    }
+
+    /**
+     * 显示宝箱解锁
+     */
+    public showUnlock() {
+        var hint = ObjectPool.pop("Hint") as Hint;
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show2("hint_unlock_png");
     }
 
     /**
@@ -227,6 +290,16 @@ class GameScene extends BaseScene {
     public gameOver() {
         this._countdown.over();
         this.showTimesUp();
+    }
+
+    /**
+     * 显示称赞
+     */
+    public showPraise(type: number) {
+        var hint = ObjectPool.pop("Hint") as Hint;
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_praise_" + type + "_png", 0.5, 0.35);
     }
 
     /**

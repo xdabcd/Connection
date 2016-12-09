@@ -14,12 +14,16 @@ class GameController extends BaseController {
 		this.registerFunc(GameCmd.SHOW_TIME_START, this.showTimeStart, this);
 		this.registerFunc(GameCmd.TIME_INIT, this.initTime, this);
 		this.registerFunc(GameCmd.SHOW_GO, this.showGO, this);
+		this.registerFunc(GameCmd.SHOW_UNLOCK, this.showUnlock, this);
+		this.registerFunc(GameCmd.SHOW_PRAISE, this.showPraise, this);
 
 		this.registerFunc(GameCmd.UPDATE_TIME, this.updateTime, this);
 		this.registerFunc(GameCmd.UPDATE_SCORE, this.updateScore, this);
-		this.registerFunc(GameCmd.UPDATE_TIMES, this.updateTimes, this);
+		this.registerFunc(GameCmd.ADD_TIMES, this.addTimes, this);
 
+		this.registerFunc(GameCmd.FIRE, this.fire, this);
 		this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
+		this.registerFunc(GameCmd.ADD_TIME, this.addTime, this);
 	}
 
 	/**
@@ -51,10 +55,32 @@ class GameController extends BaseController {
 	}
 
 	/**
+	 * 进入爆炸模式
+	 */
+	private fire() {
+		this.model.fire();
+		this.scene.showFire();
+	}
+
+	/**
+	 * 显示解锁
+	 */
+	private showUnlock() {
+		this.scene.showUnlock();
+	}
+
+	/**
 	 * 显示GO
 	 */
 	private showGO() {
 		this.scene.showGO();
+	}
+
+	/**
+	 * 显示称赞
+	 */
+	private showPraise(type: number) {
+		this.scene.showPraise(type);
 	}
 
 	/**
@@ -72,17 +98,33 @@ class GameController extends BaseController {
 	}
 
 	/**
-	 * 更新倍数
+	 * 增加倍率
 	 */
-	private updateTimes(times: number) {
-		this.scene.updateTimes(times);
+	private addTimes(delay: number, pos: Vector2, ts: number) {
+		this.model.addTimes(delay, (times) => {
+			if (pos) {
+				this.scene.addTimes(times, pos, ts);
+			} else {
+				this.scene.updateTimes(times);
+			}
+		});
 	}
 
 	/**
 	 * 添加得分
 	 */
-	private addScore(score: number, pos: Vector2, type: number) {
-		this.scene.showScore(this.model.addScore(score), pos, type);
+	private addScore(delay: number, score: number, pos: Vector2, type: number) {
+		this.model.addScore(delay, score, (score) => {
+			this.scene.showScore(score, pos, type);
+		});
+	}
+
+	/**
+	 * 添加时间
+	 */
+	private addTime() {
+		this.model.addTime();
+		this.scene.showAddTime();
 	}
 
 	/**

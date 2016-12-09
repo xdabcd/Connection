@@ -12,6 +12,12 @@ var TileData = (function () {
         this.info = null;
         /** 钥匙 */
         this.key = false;
+        /** 时间 */
+        this.time = false;
+        /** 倍数 */
+        this.times = 0;
+        /** 燃烧状态 */
+        this.isFire = false;
     }
     var d = __define,c=TileData,p=c.prototype;
     p.clone = function () {
@@ -21,6 +27,9 @@ var TileData = (function () {
         data.effect = this.effect;
         data.info = this.info;
         data.key = this.key;
+        data.time = this.time;
+        data.times = this.times;
+        data.isFire = this.isFire;
         return data;
     };
     return TileData;
@@ -37,6 +46,7 @@ var TileEffect;
 var TileRemoveFx;
 (function (TileRemoveFx) {
     TileRemoveFx[TileRemoveFx["Smoke"] = 0] = "Smoke";
-    TileRemoveFx[TileRemoveFx["Thunder"] = 1] = "Thunder";
+    TileRemoveFx[TileRemoveFx["Bomb"] = 1] = "Bomb";
+    TileRemoveFx[TileRemoveFx["Thunder"] = 3] = "Thunder";
 })(TileRemoveFx || (TileRemoveFx = {}));
 //# sourceMappingURL=TileData.js.map

@@ -16,7 +16,13 @@ var GridModel = (function (_super) {
         this.setState(GridState.Start);
         this._hor = GameData.hor;
         this._ver = GameData.ver;
+        this._times = 0;
+        this._isFire = false;
+        this.addTimes(0);
         this._selectArr = [];
+        this._lastAdd = -1;
+        this._connectArr = [];
+        this._removeArr = [];
         this.showChests();
         this.initTileList();
         this.repair();
@@ -81,10 +87,14 @@ var GridModel = (function (_super) {
     p.touchEnd = function () {
         if (!this.isState(GridState.Select))
             return;
-        for (var i = 0; i < this._selectArr.length; i++) {
+        var length = this._selectArr.length;
+        for (var i = 0; i < length; i++) {
             this.unselect(this._selectArr[i]);
         }
         if (this.canRemove) {
+            this._curEffect = TileEffect.NONE;
+            this._connectArr.push(length);
+            this._removeArr.push(length + this._signArr.length);
             this.remove();
         }
         else {
@@ -135,12 +145,16 @@ var GridModel = (function (_super) {
             }
             var x = tileData.pos.x;
             var y = tileData.pos.y;
+            if (this._isFire) {
+                tileData.isFire = true;
+                tileData.removeFx = TileRemoveFx.Bomb;
+            }
             var t = this.delTile(x, y, null, this.removeInterval * i);
             duration = Math.max(duration, t);
         }
         if (td) {
             var score = GameData.cacuScore(length);
-            this.addScore(score, td.pos, td.type);
+            this.addScore(0, score, td.pos, td.type);
         }
         var pos = this._selectArr[length - 1].pos.clone();
         this.setTimeout(duration + this.interval, function () {
@@ -185,24 +199,86 @@ var GridModel = (function (_super) {
                 }
             }
         }
+        var removeCnt = this._removeArr[this._removeArr.length - 1];
+        var praise = 0;
+        if (removeCnt >= 35) {
+            praise = 3;
+        }
+        else if (removeCnt >= 30) {
+            praise = 2;
+        }
+        else if (removeCnt >= 25) {
+            praise = 1;
+        }
+        if (praise) {
+            this.showPraise(praise);
+        }
+        if (!this._isFire && removeCnt >= 40) {
+            this.setTimeout(this.moveTime, function () { return _this.fire(); });
+        }
+        /** 附上钥匙、效果、时间、倍数 */
+        var arr = [];
+        for (var i = 0; i < removeArr.length; i++) {
+            for (var j = 0; j < removeArr[i].length; j++) {
+                arr.push(new Vector2(i, j));
+            }
+        }
+        arr.sort(SortUtils.random);
         var keyPos;
         if (this._newKey) {
             this._newKey = false;
-            var arr = [];
-            for (var i = 0; i < removeArr.length; i++) {
-                for (var j = 0; j < removeArr[i].length; j++) {
-                    arr.push(new Vector2(i, j));
-                }
+            keyPos = arr.pop();
+        }
+        var effectPosArr = [];
+        var cc = 0;
+        for (var i = this._lastAdd + 1; i < this._connectArr.length; i++) {
+            cc += this._connectArr[i];
+        }
+        if (cc >= 15) {
+            var cnt = Math.floor(cc / 15);
+            for (var i = 0; i < cnt; i++) {
+                effectPosArr.push(arr.pop());
             }
-            var idx = RandomUtils.limitInteger(0, arr.length - 1);
-            keyPos = arr[idx];
+            this._lastAdd = this._connectArr.length - 1;
+        }
+        var timePos;
+        if (removeCnt >= 40) {
+            timePos = arr.pop();
+        }
+        var timesPosArr = [];
+        if (this._curEffect == TileEffect.RANDOM) {
+            for (var i = 0; i < 3; i++) {
+                timesPosArr.push(arr.pop());
+            }
+        }
+        else if (this._curEffect == TileEffect.KIND || removeCnt >= 20) {
+            timesPosArr.push(arr.pop());
         }
         for (var x = 0; x < removeArr.length; x++) {
             var tmpArr = removeArr[x];
             tmpArr.sort(SortUtils.sortNum);
             for (var i = 0; i < tmpArr.length; i++) {
                 var k = (keyPos != null) && (x == keyPos.x) && (i == keyPos.y);
-                var tileData = this.addTile(x, i - tmpArr.length, null, null, k);
+                var e = null;
+                for (var j = 0; j < effectPosArr.length; j++) {
+                    if ((x == effectPosArr[j].x) && (i == effectPosArr[j].y)) {
+                        var rand = Math.random();
+                        if (rand < 0.7) {
+                            e = TileEffect.BOMB;
+                        }
+                        else {
+                            e = TileEffect.CROSS;
+                        }
+                    }
+                }
+                var t = (timePos != null) && (x == timePos.x) && (i == timePos.y);
+                var ts = 0;
+                for (var j = 0; j < timesPosArr.length; j++) {
+                    if ((x == timesPosArr[j].x) && (i == timesPosArr[j].y)) {
+                        ts = this._times + 1;
+                    }
+                }
+                var tileData = this.addTile(x, i - tmpArr.length, null, e, k, t, ts);
                 moveList.push(this.moveTile(tileData, new Vector2(x, i)));
             }
             for (var y = 0; y < this._ver; y++) {
@@ -254,8 +330,10 @@ var GridModel = (function (_super) {
      * 执行效果
      */
     p.doEffect = function (tileData, delay) {
-        var _this = this;
         var effect = tileData.effect;
+        if (!effect && this.checkFire(tileData)) {
+            effect = TileEffect.BOMB;
+        }
         var cnt = 0;
         if (this._effectCntArr[effect] == null) {
             this._effectCntArr[effect] = cnt = 1;
@@ -269,9 +347,9 @@ var GridModel = (function (_super) {
         var pos = tileData.pos;
         var posArr = this.getEffect(tileData);
         posArr.sort(SortUtils.random);
-        var flag1 = (tileData.effect == TileEffect.BOMB || tileData.effect == TileEffect.CROSS);
-        var flag2 = (tileData.effect == TileEffect.RANDOM);
-        var flag3 = (tileData.effect == TileEffect.KIND);
+        var flag1 = (effect == TileEffect.BOMB || effect == TileEffect.CROSS);
+        var flag2 = (effect == TileEffect.RANDOM);
+        var flag3 = (effect == TileEffect.KIND);
         for (var i = 0; i < posArr.length; i++) {
             var p = posArr[i];
             var direction = void 0;
@@ -290,7 +368,7 @@ var GridModel = (function (_super) {
                 else {
                     direction = Direction.Left;
                 }
-                l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y)) - 1;
+                l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
             }
             else if (flag2) {
                 direction = Direction.Center;
@@ -306,12 +384,16 @@ var GridModel = (function (_super) {
             if (td && td.key) {
                 score += GameData.keyScore;
             }
+            else if (td && td.times) {
+                score += GameData.timesScore;
+            }
             duration = Math.max(duration, t);
         }
         this.shake(tileData, delay);
-        this.setTimeout(delay, function () {
-            _this.addScore(score, tileData.pos, 0);
-        });
+        if (tileData.effect) {
+            this.addScore(delay, score, tileData.pos, 0);
+        }
+        this._curEffect = Math.max(this._curEffect, tileData.effect);
         return duration;
     };
     /**
@@ -399,7 +481,11 @@ var GridModel = (function (_super) {
         var y = tileData.pos.y;
         var hor = this._hor;
         var ver = this._ver;
-        switch (tileData.effect) {
+        var effect = tileData.effect;
+        if (!effect && this.checkFire(tileData)) {
+            effect = TileEffect.BOMB;
+        }
+        switch (effect) {
             case TileEffect.BOMB:
                 var minX = Math.max(0, x - 1);
                 var maxX = Math.min(hor, x + 2);
@@ -464,10 +550,52 @@ var GridModel = (function (_super) {
         return posArr;
     };
     /**
+     * 进入爆炸模式
+     */
+    p.fire = function () {
+        this._isFire = true;
+        this.applyFunc(GameCmd.FIRE);
+        this.applyControllerFunc(ControllerID.Game, GameCmd.FIRE);
+    };
+    /**
+     * 爆炸模式结束
+     */
+    p.fireOver = function () {
+        this._isFire = false;
+        if (this.isState(GridState.Select)) {
+            for (var i = 0; i < this._selectArr.length; i++) {
+                this._selectArr[i].isFire = false;
+                this.sign();
+            }
+        }
+    };
+    /**
      * 获取得分
      */
-    p.addScore = function (score, pos, type) {
-        this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, score, pos, type);
+    p.addScore = function (delay, score, pos, type) {
+        this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, delay, score, pos, type);
+    };
+    /**
+     * 添加时间
+     */
+    p.addTime = function () {
+        this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_TIME);
+    };
+    /**
+     * 添加倍率
+     */
+    p.addTimes = function (delay, pos, ts) {
+        if (pos === void 0) { pos = null; }
+        if (ts === void 0) { ts = 0; }
+        this._times += 1;
+        this.updateTimes();
+        this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_TIMES, delay, pos, ts);
+    };
+    /**
+     * 显示称赞
+     */
+    p.showPraise = function (type) {
+        this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_PRAISE, type);
     };
     /**
      * 显示宝箱
@@ -488,13 +616,65 @@ var GridModel = (function (_super) {
     /**
      * 解锁宝箱
      */
-    p.unlockChest = function () {
+    p.unlockChest = function (pos, type) {
+        var _this = this;
         this._keyCount += 1;
+        this.applyFunc(GridCmd.UNLOCK_CHEST, pos, type);
         if (this._keyCount >= 5) {
-            this.hideChests();
+            this.setTimeout(1300, function () {
+                _this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_UNLOCK);
+                _this.hideChests();
+                _this.newRow();
+            });
             return;
         }
         this._newKey = true;
+    };
+    /**
+     * 新增一行
+     */
+    p.newRow = function () {
+        var arr = [];
+        var chanceArr = [0.65, 0.85, 0.95, 1];
+        var rand = Math.random();
+        var idx1 = RandomUtils.limitInteger(0, this._hor - 1);
+        var idx2 = RandomUtils.limitInteger(0, this._hor - 1);
+        while (idx1 == idx2) {
+            idx2 = RandomUtils.limitInteger(0, this._hor - 1);
+        }
+        var type = this.randomType();
+        if (rand < chanceArr[0]) {
+            for (var i = 0; i < this._hor; i++) {
+                var td = this.addTile(i, this._ver - 1, type, null, false, idx1 == i);
+                this._tileList[i][this._ver - 1] = td;
+                arr.push(td);
+            }
+        }
+        else if (rand < chanceArr[1]) {
+            for (var i = 0; i < this._hor; i++) {
+                var effect = (idx2 == i) ? TileEffect.KIND : null;
+                var td = this.addTile(i, this._ver - 1, null, effect, false, idx1 == i);
+                this._tileList[i][this._ver - 1] = td;
+                arr.push(td);
+            }
+        }
+        else if (rand < chanceArr[2]) {
+            for (var i = 0; i < this._hor; i++) {
+                var ts = (idx2 == i) ? (this._times + 1) : 0;
+                var td = this.addTile(i, this._ver - 1, type, null, false, idx1 == i, ts);
+                this._tileList[i][this._ver - 1] = td;
+                arr.push(td);
+            }
+        }
+        else {
+            for (var i = 0; i < this._hor; i++) {
+                var effect = (idx2 == i) ? TileEffect.RANDOM : null;
+                var td = this.addTile(i, this._ver - 1, type, effect, false, idx1 == i);
+                this._tileList[i][this._ver - 1] = td;
+                arr.push(td);
+            }
+        }
+        this.applyFunc(GridCmd.NEW_ROW, arr);
     };
     /**
      * 初始化格子列表
@@ -509,15 +689,22 @@ var GridModel = (function (_super) {
     /**
      * 添加格子
      */
-    p.addTile = function (x, y, type, effect, key) {
+    p.addTile = function (x, y, type, effect, key, time, times) {
         if (type === void 0) { type = null; }
         if (effect === void 0) { effect = null; }
         if (key === void 0) { key = false; }
+        if (time === void 0) { time = false; }
+        if (times === void 0) { times = 0; }
         var tileData = new TileData();
         tileData.pos = new Vector2(x, y);
         tileData.type = type == null ? this.randomType() : type;
         tileData.effect = effect || TileEffect.NONE;
         tileData.key = key;
+        tileData.time = time;
+        tileData.times = times;
+        if (effect) {
+            tileData.type = 0;
+        }
         this.creatTile(tileData);
         return tileData;
     };
@@ -538,11 +725,18 @@ var GridModel = (function (_super) {
             }
             if (tileData.key) {
                 this.setTimeout(delay, function () {
-                    _this.unlockChest();
-                    _this.addScore(GameData.keyScore, tileData.pos, tileData.type);
+                    _this.unlockChest(tileData.pos, tileData.type);
                 });
+                this.addScore(delay, GameData.keyScore, tileData.pos, tileData.type);
             }
-            if (tileData.effect != TileEffect.NONE && direction != Direction.Center) {
+            else if (tileData.time) {
+                this.addTime();
+            }
+            else if (tileData.times > 0) {
+                this.addTimes(delay, tileData.pos, tileData.times);
+                this.addScore(delay, GameData.timesScore, tileData.pos, tileData.type);
+            }
+            if ((tileData.effect != TileEffect.NONE || this.checkFire(tileData)) && direction != Direction.Center) {
                 var t = this.doEffect(tileData, delay);
                 duration = Math.max(duration, t);
             }
@@ -593,19 +787,40 @@ var GridModel = (function (_super) {
      * 连接格子
      */
     p.connect = function (src, dest, hl) {
+        dest.isFire = this._isFire;
         this.applyFunc(GridCmd.TILE_CONNECT, src, dest, hl);
     };
     /**
      * 选择格子
      */
     p.select = function (tileData, hl) {
+        tileData.isFire = this._isFire;
         this.applyFunc(GridCmd.TILE_SELECT, tileData, hl);
     };
     /**
      * 取消选择格子
      */
     p.unselect = function (tileData) {
+        tileData.isFire = false;
         this.applyFunc(GridCmd.TILE_UNSELECT, tileData);
+    };
+    /**
+     * 更新倍率
+     */
+    p.updateTimes = function () {
+        var arr = this._tileList;
+        if (!arr) {
+            return;
+        }
+        for (var x = 0; x < this._tileList.length; x++) {
+            for (var y = 0; y < this._tileList.length; y++) {
+                var td = this._tileList[x][y];
+                if (td && td.times > 0) {
+                    td.times = this._times + 1;
+                    this.applyFunc(GridCmd.TILE_CHANGE_TIMES, td);
+                }
+            }
+        }
     };
     /**
      * 转化随机格子效果
@@ -703,6 +918,12 @@ var GridModel = (function (_super) {
             return this._selectArr.length >= 3;
         }
     );
+    /**
+     * 是否燃烧
+     */
+    p.checkFire = function (tileData) {
+        return tileData.isFire;
+    };
     /**
      * 设置状态
      */

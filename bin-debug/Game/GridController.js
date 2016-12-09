@@ -26,10 +26,15 @@ var GridController = (function (_super) {
         this.registerFunc(GridCmd.TILE_MOVE, this.moveTile, this);
         this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
         this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
+        this.registerFunc(GridCmd.TILE_CHANGE_TIMES, this.changeTileTimes, this);
+        this.registerFunc(GridCmd.NEW_ROW, this.newRow, this);
+        this.registerFunc(GameCmd.FIRE, this.fire, this);
+        this.registerFunc(GameCmd.FIRE_OVER, this.fireOver, this);
         this.registerFunc(GridCmd.SET_SELECT, this.setSelect, this);
         this.registerFunc(GridCmd.SHAKE, this.shake, this);
         this.registerFunc(GridCmd.SHOW_CHESTS, this.showChests, this);
         this.registerFunc(GridCmd.HIDE_CHESTS, this.hideChests, this);
+        this.registerFunc(GridCmd.UNLOCK_CHEST, this.unlockChest, this);
     }
     var d = __define,c=GridController,p=c.prototype;
     /**
@@ -55,6 +60,25 @@ var GridController = (function (_super) {
      */
     p.touchEnd = function () {
         this.model.touchEnd();
+    };
+    /**
+     * 新增一行
+     */
+    p.newRow = function (arr) {
+        this.scene.newRow(arr);
+    };
+    /**
+     * 进入爆炸模式
+     */
+    p.fire = function () {
+        this.scene.showFire();
+    };
+    /**
+     * 爆炸模式结束
+     */
+    p.fireOver = function () {
+        this.model.fireOver();
+        this.scene.hideFire();
     };
     /**
      * 创建格子
@@ -85,6 +109,12 @@ var GridController = (function (_super) {
      */
     p.hideChests = function () {
         this.scene.hideChests();
+    };
+    /**
+     * 解锁宝箱
+     */
+    p.unlockChest = function (pos, type) {
+        this.scene.unlockChest(pos, type);
     };
     /**
      * 震动
@@ -145,6 +175,12 @@ var GridController = (function (_super) {
      */
     p.changeTileType = function (tileData) {
         this.scene.changeTileType(tileData);
+    };
+    /**
+     * 转换格子倍率
+     */
+    p.changeTileTimes = function (tileData) {
+        this.scene.changeTileTimes(tileData);
     };
     d(p, "model"
         /**

@@ -15,6 +15,14 @@ class GridModel extends BaseModel {
 	private _keyCount: number;
 	private _newKey: boolean;
 
+	private _curEffect: TileEffect;
+	private _lastAdd: number;
+	private _connectArr: Array<number>;
+	private _removeArr: Array<number>;
+
+	private _times: number;
+	private _isFire: boolean;
+
 	/**
 	 * 开始
 	 */
@@ -23,8 +31,13 @@ class GridModel extends BaseModel {
 		this._hor = GameData.hor;
 		this._ver = GameData.ver;
 
-
+		this._times = 0;
+		this._isFire = false;
+		this.addTimes(0);
 		this._selectArr = [];
+		this._lastAdd = -1;
+		this._connectArr = [];
+		this._removeArr = [];
 		this.showChests();
 		this.initTileList();
 		this.repair();
@@ -91,10 +104,14 @@ class GridModel extends BaseModel {
 	public touchEnd() {
 		if (!this.isState(GridState.Select)) return;
 
-		for (let i = 0; i < this._selectArr.length; i++) {
+		var length = this._selectArr.length;
+		for (let i = 0; i < length; i++) {
 			this.unselect(this._selectArr[i]);
 		}
 		if (this.canRemove) {
+			this._curEffect = TileEffect.NONE;
+			this._connectArr.push(length);
+			this._removeArr.push(length + this._signArr.length);
 			this.remove();
 		} else {
 			this.setState(GridState.Idle);
@@ -142,12 +159,16 @@ class GridModel extends BaseModel {
 			}
 			let x = tileData.pos.x;
 			let y = tileData.pos.y;
+			if (this._isFire) {
+				tileData.isFire = true;
+				tileData.removeFx = TileRemoveFx.Bomb;
+			}
 			let t = this.delTile(x, y, null, this.removeInterval * i);
 			duration = Math.max(duration, t);
 		}
 		if (td) {
 			var score = GameData.cacuScore(length);
-			this.addScore(score, td.pos, td.type);
+			this.addScore(0, score, td.pos, td.type);
 		}
 
 		var pos = this._selectArr[length - 1].pos.clone();
@@ -192,25 +213,87 @@ class GridModel extends BaseModel {
 			}
 		}
 
+		var removeCnt = this._removeArr[this._removeArr.length - 1];
+		var praise: number = 0;
+		if (removeCnt >= 35) {
+			praise = 3;
+		} else if (removeCnt >= 30) {
+			praise = 2;
+		} else if (removeCnt >= 25) {
+			praise = 1;
+		}
+		if (praise) {
+			this.showPraise(praise);
+		}
+
+		if (!this._isFire && removeCnt >= 40) {
+			this.setTimeout(this.moveTime, () => this.fire());
+		}
+
+		/** 附上钥匙、效果、时间、倍数 */
+		var arr = [];
+		for (let i = 0; i < removeArr.length; i++) {
+			for (let j = 0; j < removeArr[i].length; j++) {
+				arr.push(new Vector2(i, j));
+			}
+		}
+		arr.sort(SortUtils.random);
 		var keyPos: Vector2;
 		if (this._newKey) {
 			this._newKey = false;
-			var arr = [];
-			for (let i = 0; i < removeArr.length; i++) {
-				for (let j = 0; j < removeArr[i].length; j++) {
-					arr.push(new Vector2(i, j));
-				}
-			}
-			var idx = RandomUtils.limitInteger(0, arr.length - 1);
-			keyPos = arr[idx];
+			keyPos = arr.pop();
 		}
+		var effectPosArr: Array<Vector2> = [];
+		var cc: number = 0;
+		for (let i: number = this._lastAdd + 1; i < this._connectArr.length; i++) {
+			cc += this._connectArr[i];
+		}
+		if (cc >= 15) {
+			var cnt = Math.floor(cc / 15);
+			for (let i = 0; i < cnt; i++) {
+				effectPosArr.push(arr.pop());
+			}
+			this._lastAdd = this._connectArr.length - 1;
+		}
+		var timePos: Vector2;
+		if (removeCnt >= 40) {
+			timePos = arr.pop();
+		}
+		var timesPosArr: Array<Vector2> = [];
+		if (this._curEffect == TileEffect.RANDOM) {
+			for (let i = 0; i < 3; i++) {
+				timesPosArr.push(arr.pop());
+			}
+		} else if (this._curEffect == TileEffect.KIND || removeCnt >= 20) {
+			timesPosArr.push(arr.pop());
+		}
+
 		for (let x: number = 0; x < removeArr.length; x++) {
 			let tmpArr: Array<number> = removeArr[x];
 			tmpArr.sort(SortUtils.sortNum);
 
 			for (let i: number = 0; i < tmpArr.length; i++) {
-				var k = (keyPos != null) && (x == keyPos.x) && (i == keyPos.y);
-				let tileData = this.addTile(x, i - tmpArr.length, null, null, k);
+				let k = (keyPos != null) && (x == keyPos.x) && (i == keyPos.y);
+				let e = null;
+				for (let j: number = 0; j < effectPosArr.length; j++) {
+					if ((x == effectPosArr[j].x) && (i == effectPosArr[j].y)) {
+						let rand = Math.random();
+						if (rand < 0.7) {
+							e = TileEffect.BOMB
+						} else {
+							e = TileEffect.CROSS;
+						}
+					}
+				}
+				let t = (timePos != null) && (x == timePos.x) && (i == timePos.y);
+				let ts = 0;
+				for (let j: number = 0; j < timesPosArr.length; j++) {
+					if ((x == timesPosArr[j].x) && (i == timesPosArr[j].y)) {
+						ts = this._times + 1;
+					}
+				}
+
+				let tileData = this.addTile(x, i - tmpArr.length, null, e, k, t, ts);
 				moveList.push(this.moveTile(tileData, new Vector2(x, i)));
 			}
 
@@ -266,6 +349,9 @@ class GridModel extends BaseModel {
 	 */
 	private doEffect(tileData: TileData, delay: number): number {
 		var effect = tileData.effect;
+		if (!effect && this.checkFire(tileData)) {
+			effect = TileEffect.BOMB;
+		}
 		var cnt = 0;
 		if (this._effectCntArr[effect] == null) {
 			this._effectCntArr[effect] = cnt = 1;
@@ -279,9 +365,9 @@ class GridModel extends BaseModel {
 		var pos = tileData.pos;
 		var posArr = this.getEffect(tileData);
 		posArr.sort(SortUtils.random);
-		var flag1 = (tileData.effect == TileEffect.BOMB || tileData.effect == TileEffect.CROSS);
-		var flag2 = (tileData.effect == TileEffect.RANDOM);
-		var flag3 = (tileData.effect == TileEffect.KIND);
+		var flag1 = (effect == TileEffect.BOMB || effect == TileEffect.CROSS);
+		var flag2 = (effect == TileEffect.RANDOM);
+		var flag3 = (effect == TileEffect.KIND);
 		for (let i = 0; i < posArr.length; i++) {
 			let p = posArr[i];
 			let direction;
@@ -297,7 +383,7 @@ class GridModel extends BaseModel {
 				} else {
 					direction = Direction.Left;
 				}
-				l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y)) - 1;
+				l = Math.max(Math.abs(p.x - pos.x), Math.abs(p.y - pos.y));
 			} else if (flag2) {
 				direction = Direction.Center;
 				l = p.x + 1;
@@ -307,18 +393,21 @@ class GridModel extends BaseModel {
 					td.removeFx = TileRemoveFx.Thunder;
 				}
 			}
-
 			let t = this.delTile(p.x, p.y, direction, delay + l * this.effectInterval);
 			if (td && td.key) {
 				score += GameData.keyScore;
+			} else if (td && td.times) {
+				score += GameData.timesScore;
 			}
 			duration = Math.max(duration, t);
 		}
 		this.shake(tileData, delay);
 
-		this.setTimeout(delay, () => {
-			this.addScore(score, tileData.pos, 0);
-		});
+		if (tileData.effect) {
+			this.addScore(delay, score, tileData.pos, 0);
+		}
+
+		this._curEffect = Math.max(this._curEffect, tileData.effect);
 
 		return duration;
 	}
@@ -407,7 +496,11 @@ class GridModel extends BaseModel {
 		var y = tileData.pos.y;
 		var hor = this._hor;
 		var ver = this._ver;
-		switch (tileData.effect) {
+		var effect = tileData.effect;
+		if (!effect && this.checkFire(tileData)) {
+			effect = TileEffect.BOMB;
+		}
+		switch (effect) {
 			case TileEffect.BOMB:
 				let minX = Math.max(0, x - 1);
 				let maxX = Math.min(hor, x + 2);
@@ -471,10 +564,55 @@ class GridModel extends BaseModel {
 	}
 
 	/**
+	 * 进入爆炸模式
+	 */
+	private fire() {
+		this._isFire = true;
+		this.applyFunc(GameCmd.FIRE);
+		this.applyControllerFunc(ControllerID.Game, GameCmd.FIRE);
+	}
+
+	/**
+	 * 爆炸模式结束
+	 */
+	public fireOver() {
+		this._isFire = false;
+		if (this.isState(GridState.Select)) {
+			for (let i = 0; i < this._selectArr.length; i++) {
+				this._selectArr[i].isFire = false;
+				this.sign();
+			}
+		}
+	}
+
+	/**
 	 * 获取得分
 	 */
-	private addScore(score: number, pos: Vector2, type: number) {
-		this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, score, pos, type);
+	private addScore(delay: number, score: number, pos: Vector2, type: number) {
+		this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_SCORE, delay, score, pos, type);
+	}
+
+	/**
+	 * 添加时间
+	 */
+	private addTime() {
+		this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_TIME);
+	}
+
+	/**
+	 * 添加倍率
+	 */
+	private addTimes(delay: number, pos: Vector2 = null, ts: number = 0) {
+		this._times += 1;
+		this.updateTimes();
+		this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_TIMES, delay, pos, ts);
+	}
+
+	/**
+	 * 显示称赞
+	 */
+	private showPraise(type: number) {
+		this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_PRAISE, type);
 	}
 
 	/**
@@ -498,13 +636,65 @@ class GridModel extends BaseModel {
 	/**
 	 * 解锁宝箱
 	 */
-	private unlockChest() {
+	private unlockChest(pos: Vector2, type: number) {
 		this._keyCount += 1;
+		this.applyFunc(GridCmd.UNLOCK_CHEST, pos, type);
 		if (this._keyCount >= 5) {
-			this.hideChests();
+			this.setTimeout(1300, () => {
+				this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_UNLOCK);
+				this.hideChests();
+				this.newRow();
+			});
 			return;
 		}
 		this._newKey = true;
+	}
+
+	/**
+	 * 新增一行
+	 */
+	private newRow() {
+		var arr = [];
+		var chanceArr = [0.65, 0.85, 0.95, 1];
+		var rand = Math.random();
+		var idx1 = RandomUtils.limitInteger(0, this._hor - 1);
+		var idx2 = RandomUtils.limitInteger(0, this._hor - 1);
+		while (idx1 == idx2) {
+			idx2 = RandomUtils.limitInteger(0, this._hor - 1);
+		}
+		var type = this.randomType();
+
+		if (rand < chanceArr[0]) {
+			for (let i = 0; i < this._hor; i++) {
+				var td = this.addTile(i, this._ver - 1, type, null, false, idx1 == i);
+				this._tileList[i][this._ver - 1] = td;
+				arr.push(td);
+			}
+		} else if (rand < chanceArr[1]) {
+			for (let i = 0; i < this._hor; i++) {
+				var effect = (idx2 == i) ? TileEffect.KIND : null;
+				var td = this.addTile(i, this._ver - 1, null, effect, false, idx1 == i);
+				this._tileList[i][this._ver - 1] = td;
+				arr.push(td);
+			}
+		} else if (rand < chanceArr[2]) {
+			for (let i = 0; i < this._hor; i++) {
+				var ts = (idx2 == i) ? (this._times + 1) : 0;
+				var td = this.addTile(i, this._ver - 1, type, null, false, idx1 == i, ts);
+				this._tileList[i][this._ver - 1] = td;
+				arr.push(td);
+			}
+		} else {
+			for (let i = 0; i < this._hor; i++) {
+				var effect = (idx2 == i) ? TileEffect.RANDOM : null;
+				var td = this.addTile(i, this._ver - 1, type, effect, false, idx1 == i);
+				this._tileList[i][this._ver - 1] = td;
+				arr.push(td);
+			}
+		}
+
+
+		this.applyFunc(GridCmd.NEW_ROW, arr);
 	}
 
 	/**
@@ -524,12 +714,18 @@ class GridModel extends BaseModel {
 	/**
 	 * 添加格子
 	 */
-	private addTile(x: number, y: number, type: number = null, effect: TileEffect = null, key: boolean = false): TileData {
+	private addTile(x: number, y: number, type: number = null, effect: TileEffect = null,
+		key: boolean = false, time: boolean = false, times: number = 0): TileData {
 		var tileData = new TileData();
 		tileData.pos = new Vector2(x, y);
 		tileData.type = type == null ? this.randomType() : type;
 		tileData.effect = effect || TileEffect.NONE;
 		tileData.key = key;
+		tileData.time = time;
+		tileData.times = times;
+		if (effect) {
+			tileData.type = 0;
+		}
 		this.creatTile(tileData);
 		return tileData;
 	}
@@ -550,12 +746,17 @@ class GridModel extends BaseModel {
 
 			if (tileData.key) {
 				this.setTimeout(delay, () => {
-					this.unlockChest();
-					this.addScore(GameData.keyScore, tileData.pos, tileData.type);
+					this.unlockChest(tileData.pos, tileData.type);
 				});
+				this.addScore(delay, GameData.keyScore, tileData.pos, tileData.type);
+			} else if (tileData.time) {
+				this.addTime();
+			} else if (tileData.times > 0) {
+				this.addTimes(delay, tileData.pos, tileData.times);
+				this.addScore(delay, GameData.timesScore, tileData.pos, tileData.type);
 			}
 
-			if (tileData.effect != TileEffect.NONE && direction != Direction.Center) {
+			if ((tileData.effect != TileEffect.NONE || this.checkFire(tileData)) && direction != Direction.Center) {
 				var t = this.doEffect(tileData, delay);
 				duration = Math.max(duration, t);
 			}
@@ -607,6 +808,7 @@ class GridModel extends BaseModel {
 	 * 连接格子
 	 */
 	private connect(src: TileData, dest: TileData, hl: boolean) {
+		dest.isFire = this._isFire;
 		this.applyFunc(GridCmd.TILE_CONNECT, src, dest, hl);
 	}
 
@@ -614,6 +816,7 @@ class GridModel extends BaseModel {
 	 * 选择格子
 	 */
 	private select(tileData: TileData, hl: boolean) {
+		tileData.isFire = this._isFire;
 		this.applyFunc(GridCmd.TILE_SELECT, tileData, hl);
 
 	}
@@ -622,8 +825,28 @@ class GridModel extends BaseModel {
 	 * 取消选择格子
 	 */
 	private unselect(tileData: TileData) {
+		tileData.isFire = false;
 		this.applyFunc(GridCmd.TILE_UNSELECT, tileData);
 
+	}
+
+	/**
+	 * 更新倍率
+	 */
+	private updateTimes() {
+		var arr = this._tileList;
+		if (!arr) {
+			return;
+		}
+		for (let x = 0; x < this._tileList.length; x++) {
+			for (let y = 0; y < this._tileList.length; y++) {
+				let td = this._tileList[x][y];
+				if (td && td.times > 0) {
+					td.times = this._times + 1;
+					this.applyFunc(GridCmd.TILE_CHANGE_TIMES, td);
+				}
+			}
+		}
 	}
 
 	/**
@@ -728,6 +951,13 @@ class GridModel extends BaseModel {
 	 */
 	private get canRemove(): boolean {
 		return this._selectArr.length >= 3;
+	}
+
+	/**
+	 * 是否燃烧
+	 */
+	private checkFire(tileData: TileData): boolean {
+		return tileData.isFire;
 	}
 
 	/**

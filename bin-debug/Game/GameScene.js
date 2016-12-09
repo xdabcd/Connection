@@ -37,6 +37,7 @@ var GameScene = (function (_super) {
         AnchorUtils.setAnchorX(this._times, 0.5);
         this.addChild(this._countdown = new Countdown);
         this.addChild(this._scoreCon = new egret.DisplayObjectContainer);
+        this.addChild(this._timesCon = new egret.DisplayObjectContainer);
         this.addChild(this._hintCon = new egret.DisplayObjectContainer);
     };
     /**
@@ -165,6 +166,46 @@ var GameScene = (function (_super) {
         this._times.text = "x" + times;
     };
     /**
+     * 添加倍数
+     */
+    p.addTimes = function (times, pos, ts) {
+        var _this = this;
+        var tr = this._grid.getAbsPosition(pos.x, pos.y);
+        var t = ObjectPool.pop("Times");
+        t.setTimes(ts);
+        this._timesCon.addChild(t);
+        t.x = tr.x;
+        t.y = tr.y;
+        var tw1 = new Tween(t);
+        tw1.to = { y: this._times.y + 5 };
+        tw1.duration = 600;
+        tw1.start();
+        var tw2 = new Tween(t);
+        tw2.to = { x: this._times.x };
+        tw2.duration = 600;
+        tw2.ease = TweenEase.QuadOut;
+        tw2.start();
+        var tw3 = new Tween(t);
+        tw3.to = { scaleY: 0.3 };
+        tw3.duration = 600;
+        tw3.ease = TweenEase.QuadOut;
+        tw3.callBack = function () {
+            t.scaleY = 1;
+            t.destroy();
+            _this.updateTimes(times);
+        };
+        tw3.start();
+    };
+    /**
+     * 进入爆炸模式提示
+     */
+    p.showFire = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_fire_png", 0.5, 0.35);
+    };
+    /**
      * 显示得分
      */
     p.showScore = function (score, pos, type) {
@@ -174,6 +215,24 @@ var GameScene = (function (_super) {
         fs.y = tp.y;
         this._scoreCon.addChild(fs);
         fs.show(score, type);
+    };
+    /**
+     * 显示增加时间
+     */
+    p.showAddTime = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_add_time_png", 0.5, 0.35);
+    };
+    /**
+     * 显示宝箱解锁
+     */
+    p.showUnlock = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show2("hint_unlock_png");
     };
     /**
      * 显示时间完
@@ -190,6 +249,15 @@ var GameScene = (function (_super) {
     p.gameOver = function () {
         this._countdown.over();
         this.showTimesUp();
+    };
+    /**
+     * 显示称赞
+     */
+    p.showPraise = function (type) {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show1("hint_praise_" + type + "_png", 0.5, 0.35);
     };
     /**
      * 打开

@@ -11,8 +11,8 @@ var Tile = (function (_super) {
         this.addChild(this._con = new egret.DisplayObjectContainer);
         this._con.addChild(this._icon = new egret.Bitmap);
         this._con.addChild(this._key = new egret.Bitmap);
+        this.addChild(this._times = new Times);
         this.addTouch();
-        AnchorUtils.setAnchor(this._con, 0.5);
         AnchorUtils.setAnchor(this._signIcon, 0.5);
     }
     var d = __define,c=Tile,p=c.prototype;
@@ -27,15 +27,18 @@ var Tile = (function (_super) {
         this.rotation = 0;
         this._signIcon.visible = false;
         this._isSelect = false;
-        this.touchEnabled = true;
+        this._touchObj.touchEnabled = true;
         this._isShake = false;
     };
     /**
      * 添加触摸
      */
     p.addTouch = function () {
-        this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
-        this.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
+        this.addChild(this._touchObj = new egret.Sprite);
+        DrawUtils.drawCircle(this._touchObj, 30, 0);
+        this._touchObj.alpha = 0;
+        this._touchObj.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
+        this._touchObj.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
     };
     /**
      * 触摸回调
@@ -44,6 +47,13 @@ var Tile = (function (_super) {
         if (this._callBack) {
             this._callBack();
         }
+    };
+    /**
+     * 设置图标
+     */
+    p.setIcon = function (iconName) {
+        this._icon.texture = RES.getRes(iconName);
+        AnchorUtils.setAnchor(this._icon, 0.5);
     };
     /**
      * 设置回调
@@ -77,7 +87,6 @@ var Tile = (function (_super) {
             this.addChild(fx);
             fx.setCallBack(function () {
                 _this._icon.visible = true;
-                _this.removeChild(fx);
             });
             fx.play();
         }
@@ -103,45 +112,63 @@ var Tile = (function (_super) {
      */
     p.select = function (hl) {
         var _this = this;
-        if (!this._isSelect) {
-            var duration = 500;
-            var delay = 0;
-            var tw = function (a, t, callBack) {
-                if (callBack === void 0) { callBack = null; }
-                var tw1 = new Tween(_this._con);
-                tw1.to = {
-                    rotation: a
-                };
-                tw1.duration = t;
-                tw1.delay = delay;
-                tw1.callBack = callBack;
-                tw1.start();
-                delay += t;
-            };
-            this._con.rotation = 170;
-            tw(10, duration * 0.5);
-            tw(-10, delay * 0.25);
-            tw(5, duration * 0.2);
-            tw(0, duration * 0.05);
+        if (this._time) {
+            if (hl) {
+                this._timeFx.play();
+            }
+            else {
+                this._timeFx.stopAtFirstFrame();
+            }
+            this._timeFx.visible = true;
+            this._icon.visible = false;
         }
-        this._isSelect = true;
-        if (this._type == 0)
-            return;
-        if (hl) {
-            this._icon.texture = RES.getRes("gem_" + this._type + "_l_png");
+        else if (this._effect > 0) {
         }
         else {
-            this._icon.texture = RES.getRes("gem_" + this._type + "_s_png");
+            if (!this._isSelect) {
+                var duration = 500;
+                var delay = 0;
+                var tw = function (a, t, callBack) {
+                    if (callBack === void 0) { callBack = null; }
+                    var tw1 = new Tween(_this._con);
+                    tw1.to = {
+                        rotation: a
+                    };
+                    tw1.duration = t;
+                    tw1.delay = delay;
+                    tw1.callBack = callBack;
+                    tw1.start();
+                    delay += t;
+                };
+                this._con.rotation = 170;
+                tw(10, duration * 0.5);
+                tw(-10, delay * 0.25);
+                tw(5, duration * 0.2);
+                tw(0, duration * 0.05);
+            }
+            if (hl) {
+                this.setIcon("gem_" + this._type + "_l_png");
+            }
+            else {
+                this.setIcon("gem_" + this._type + "_s_png");
+            }
         }
+        this._isSelect = true;
     };
     /**
      * 取消选中
      */
     p.unselect = function () {
+        if (this._time) {
+            this._timeFx.visible = false;
+            this._icon.visible = true;
+        }
+        else if (this._effect > 0) {
+        }
+        else {
+            this.setIcon("gem_" + this._type + "_png");
+        }
         this._isSelect = false;
-        if (this._type == 0)
-            return;
-        this._icon.texture = RES.getRes("gem_" + this._type + "_png");
     };
     /**
      * 消除
@@ -158,8 +185,8 @@ var Tile = (function (_super) {
             self.destroy();
         };
         tween.start();
-        switch (this._effect) {
-        }
+        this._times.visible = false;
+        this._key.visible = false;
     };
     /**
      * 击飞
@@ -210,6 +237,8 @@ var Tile = (function (_super) {
         };
         tween.duration = 1200;
         tween.start();
+        this._times.visible = false;
+        this._key.visible = false;
     };
     /**
      * 震动
@@ -254,7 +283,7 @@ var Tile = (function (_super) {
     p.unEnable = function () {
         this._signIcon.visible = false;
         this.pos = new Vector2(0, 100);
-        this.touchEnabled = false;
+        this._touchObj.touchEnabled = false;
     };
     /**
      * 移动
@@ -291,7 +320,15 @@ var Tile = (function (_super) {
             }
         };
         tw.duration = duration;
-        tw.callBack = callBack;
+        tw.callBack = function () {
+            callBack();
+            if (_this._showKey) {
+                var fx = ObjectPool.pop("KeyInFx");
+                _this.addChild(fx);
+                fx.play();
+                _this._showKey = false;
+            }
+        };
         tw.start();
     };
     d(p, "type",undefined
@@ -302,7 +339,7 @@ var Tile = (function (_super) {
             this._type = value;
             if (this._type == 0)
                 return;
-            this._icon.texture = RES.getRes("gem_" + value + "_png");
+            this.setIcon("gem_" + value + "_png");
         }
     );
     d(p, "effect",undefined
@@ -313,7 +350,7 @@ var Tile = (function (_super) {
             this._effect = value;
             if (this._effect == TileEffect.NONE)
                 return;
-            this._icon.texture = RES.getRes("item_" + value + "_png");
+            this.setIcon("item_" + value + "_png");
         }
     );
     d(p, "key",undefined
@@ -321,12 +358,58 @@ var Tile = (function (_super) {
          * 设置钥匙
          */
         ,function (value) {
+            this._showKey = value;
             if (value) {
                 this._key.visible = true;
                 this._key.texture = RES.getRes("key_" + this._type + "_png");
+                AnchorUtils.setAnchor(this._key, 0.5);
             }
             else {
                 this._key.visible = false;
+            }
+        }
+    );
+    d(p, "time",undefined
+        /**
+         * 设置时间
+         */
+        ,function (value) {
+            this._time = value;
+            if (this._timeFx) {
+                this._timeFx.destroy();
+            }
+            if (this._time) {
+                this.setIcon("time_" + this._type + "_png");
+                switch (this._type) {
+                    case 1:
+                        this._timeFx = ObjectPool.pop("TimeRedSelectFx");
+                        break;
+                    case 2:
+                        this._timeFx = ObjectPool.pop("TimeBlueSelectFx");
+                        break;
+                    case 3:
+                        this._timeFx = ObjectPool.pop("TimeYellowSelectFx");
+                        break;
+                    case 4:
+                        this._timeFx = ObjectPool.pop("TimeGreenSelectFx");
+                        break;
+                }
+                this.addChild(this._timeFx);
+                this._timeFx.visible = false;
+            }
+        }
+    );
+    d(p, "times",undefined
+        /**
+         * 设置倍数
+         */
+        ,function (value) {
+            if (value) {
+                this._times.visible = true;
+                this._times.setTimes(value);
+            }
+            else {
+                this._times.visible = false;
             }
         }
     );

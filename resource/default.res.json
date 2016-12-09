@@ -1,11 +1,11 @@
 {
 	"groups": [
 		{
-			"keys": "fireparticle_png,smoke_json,smoke_png,storm_json,storm_png,thunder_json,thunder_png,thunderstar_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,arrow_png,bg_png,btn_pause_png,chest_bg_png,chest_open_png,chest_png,gem_1_l_png,gem_1_s_png,gem_1_png,gem_2_l_png,gem_2_s_png,gem_2_png,gem_3_l_png,gem_3_s_png,gem_3_png,gem_4_l_png,gem_4_s_png,gem_4_png,gem_bg_1_png,gem_bg_2_png,grid_bg_png,grid_border_1_png,grid_border_2_png,grid_bottom_png,hint_add_time_png,hint_amazing_png,hint_awesome_png,hint_fire_png,hint_go_png,hint_great_png,hint_hurray_png,hint_time_start_png,hint_times_up_png,hint_unlock_png,hint_png,item_1_png,item_2_png,item_3_png,item_4_png,key_1_png,key_2_png,key_3_png,key_4_png,score_bg_1_png,score_bg_2_png,score_bg_png,select_1_png,select_2_png,select_3_png,select_4_png,time_1_png,time_2_png,time_3_png,time_4_png,time_bg_1_png,time_bg_2_png,time_bg_png,time_progress_png,times_bg_png,times_png,wood_png,items_in_png,items_in_json",
+			"keys": "fireparticle_png,items_in_json,items_in_png,smoke_json,smoke_png,storm_json,storm_png,thunder_json,thunder_png,thunderstar_png,time_select_json,time_select_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,arrow_png,bg_png,btn_pause_png,chest_bg_png,chest_open_png,chest_png,gem_1_l_png,gem_1_s_png,gem_1_png,gem_2_l_png,gem_2_s_png,gem_2_png,gem_3_l_png,gem_3_s_png,gem_3_png,gem_4_l_png,gem_4_s_png,gem_4_png,gem_bg_1_png,gem_bg_2_png,grid_bg_png,grid_border_1_png,grid_border_2_png,grid_bottom_png,hint_add_time_png,hint_fire_png,hint_go_png,hint_hurray_png,hint_time_start_png,hint_times_up_png,hint_unlock_png,hint_png,item_1_png,item_2_png,item_3_png,item_4_png,key_1_png,key_2_png,key_3_png,key_4_png,score_bg_1_png,score_bg_2_png,score_bg_png,select_1_png,select_2_png,select_3_png,select_4_png,time_1_png,time_2_png,time_3_png,time_4_png,time_bg_1_png,time_bg_2_png,time_bg_png,time_progress_png,times_bg_png,times_png,wood_png,door_png,door_json,hint_praise_3_png,hint_praise_2_png,hint_praise_1_png,fire0006_png,fire0005_png,fire0004_png,fire0003_png,fire0002_png,fire0001_png",
 			"name": "loading"
 		},
 		{
-			"keys": "Cookies_ttf,items_in_json,items_in_png",
+			"keys": "Cookies_ttf,door_json,door_png,hint_praise_2_png,hint_praise_3_png,hint_praise_1_png,fire0001_png,fire0002_png,fire0003_png,fire0004_png,fire0005_png,fire0006_png",
 			"name": "preload"
 		}
 	],
@@ -146,16 +146,6 @@
 			"name": "hint_add_time_png"
 		},
 		{
-			"url": "assets/hint_amazing.png",
-			"type": "image",
-			"name": "hint_amazing_png"
-		},
-		{
-			"url": "assets/hint_awesome.png",
-			"type": "image",
-			"name": "hint_awesome_png"
-		},
-		{
 			"url": "assets/hint_fire.png",
 			"type": "image",
 			"name": "hint_fire_png"
@@ -164,11 +154,6 @@
 			"url": "assets/hint_go.png",
 			"type": "image",
 			"name": "hint_go_png"
-		},
-		{
-			"url": "assets/hint_great.png",
-			"type": "image",
-			"name": "hint_great_png"
 		},
 		{
 			"url": "assets/hint_hurray.png",
@@ -326,6 +311,11 @@
 			"name": "fireparticle_png"
 		},
 		{
+			"url": "assets/anim/items_in.png",
+			"type": "image",
+			"name": "items_in_png"
+		},
+		{
 			"url": "assets/anim/smoke.png",
 			"type": "image",
 			"name": "smoke_png"
@@ -346,6 +336,11 @@
 			"name": "thunderstar_png"
 		},
 		{
+			"url": "assets/anim/time_select.png",
+			"type": "image",
+			"name": "time_select_png"
+		},
+		{
 			"url": "assets/anim/watercenter.png",
 			"type": "image",
 			"name": "watercenter_png"
@@ -361,14 +356,14 @@
 			"name": "waterspout_png"
 		},
 		{
+			"url": "assets/anim/items_in.json",
+			"type": "json",
+			"name": "items_in_json"
+		},
+		{
 			"url": "assets/anim/smoke.json",
 			"type": "json",
 			"name": "smoke_json"
-		},
-		{
-			"url": "assets/anim/storm.json",
-			"type": "json",
-			"name": "storm_json"
 		},
 		{
 			"url": "assets/anim/thunder.json",
@@ -376,19 +371,74 @@
 			"name": "thunder_json"
 		},
 		{
+			"url": "assets/anim/storm.json",
+			"type": "json",
+			"name": "storm_json"
+		},
+		{
+			"url": "assets/anim/time_select.json",
+			"type": "json",
+			"name": "time_select_json"
+		},
+		{
 			"url": "assets/anim/watercenter.json",
 			"type": "json",
 			"name": "watercenter_json"
 		},
 		{
-			"url": "assets/anim/items_in.json",
+			"url": "assets/anim/door.json",
 			"type": "json",
-			"name": "items_in_json"
+			"name": "door_json"
 		},
 		{
-			"url": "assets/anim/items_in.png",
+			"url": "assets/anim/door.png",
 			"type": "image",
-			"name": "items_in_png"
+			"name": "door_png"
+		},
+		{
+			"url": "assets/hint_praise_2.png",
+			"type": "image",
+			"name": "hint_praise_2_png"
+		},
+		{
+			"url": "assets/hint_praise_3.png",
+			"type": "image",
+			"name": "hint_praise_3_png"
+		},
+		{
+			"url": "assets/hint_praise_1.png",
+			"type": "image",
+			"name": "hint_praise_1_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0001.png",
+			"type": "image",
+			"name": "fire0001_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0002.png",
+			"type": "image",
+			"name": "fire0002_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0003.png",
+			"type": "image",
+			"name": "fire0003_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0004.png",
+			"type": "image",
+			"name": "fire0004_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0005.png",
+			"type": "image",
+			"name": "fire0005_png"
+		},
+		{
+			"url": "assets/anim/firefx/fire0006.png",
+			"type": "image",
+			"name": "fire0006_png"
 		}
 	]
 }

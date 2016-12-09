@@ -27,11 +27,17 @@ class GridController extends BaseController {
 		this.registerFunc(GridCmd.TILE_MOVE, this.moveTile, this);
 		this.registerFunc(GridCmd.TILE_CHANGE_EFFECT, this.changeTileEffect, this);
 		this.registerFunc(GridCmd.TILE_CHANGE_TYPE, this.changeTileType, this);
+		this.registerFunc(GridCmd.TILE_CHANGE_TIMES, this.changeTileTimes, this);
+
+		this.registerFunc(GridCmd.NEW_ROW, this.newRow, this);
+		this.registerFunc(GameCmd.FIRE, this.fire, this);
+		this.registerFunc(GameCmd.FIRE_OVER, this.fireOver, this);
 
 		this.registerFunc(GridCmd.SET_SELECT, this.setSelect, this);
 		this.registerFunc(GridCmd.SHAKE, this.shake, this);
 		this.registerFunc(GridCmd.SHOW_CHESTS, this.showChests, this);
 		this.registerFunc(GridCmd.HIDE_CHESTS, this.hideChests, this);
+		this.registerFunc(GridCmd.UNLOCK_CHEST, this.unlockChest, this);
 	}
 
 	/**
@@ -60,6 +66,28 @@ class GridController extends BaseController {
 	 */
 	private touchEnd() {
 		this.model.touchEnd();
+	}
+
+	/**
+	 * 新增一行
+	 */
+	private newRow(arr: Array<TileData>) {
+		this.scene.newRow(arr);
+	}
+
+	/**
+	 * 进入爆炸模式
+	 */
+	private fire() {
+		this.scene.showFire();
+	}
+
+	/**
+	 * 爆炸模式结束
+	 */
+	private fireOver() {
+		this.model.fireOver();
+		this.scene.hideFire();
 	}
 
 	/**
@@ -95,6 +123,13 @@ class GridController extends BaseController {
 	 */
 	private hideChests() {
 		this.scene.hideChests();
+	}
+
+	/**
+	 * 解锁宝箱
+	 */
+	private unlockChest(pos: Vector2, type: number) {
+		this.scene.unlockChest(pos, type);
 	}
 
 	/**
@@ -165,6 +200,13 @@ class GridController extends BaseController {
 	 */
 	private changeTileType(tileData: TileData) {
 		this.scene.changeTileType(tileData);
+	}
+
+	/**
+	 * 转换格子倍率
+	 */
+	private changeTileTimes(tileData: TileData) {
+		this.scene.changeTileTimes(tileData);
 	}
 
 	/**

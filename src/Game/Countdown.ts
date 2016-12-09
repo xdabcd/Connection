@@ -76,9 +76,12 @@ class Countdown extends egret.DisplayObjectContainer {
     private _ct: string;
     private _overText: Label;
 
+    private _isInit: boolean;
+
     public init(top: number) {
         this._topTime = top;
-        this.setTime(top);
+        this._curTime = top;
+        this._isInit = true;
     }
 
     private update(delta: number) {
@@ -86,17 +89,28 @@ class Countdown extends egret.DisplayObjectContainer {
         var top = this._topTime ? this._topTime : 1;
         var cp = cur / top;
         var per = this._per ? this._per : 0;
+        var as = delta / 5000;
+        if (this._isInit) {
+            as *= 10;
+        }
 
         cp = Math.max(0, cp);
         this.setProgressBg(cp);
 
-        per = Math.min(cp, per + delta / 500, 1);
+        per = Math.min(cp, per + as, 1);
         this.setProgress(per);
         this._per = per;
+
+        if (this._isInit) {
+            this.setText(top * per);
+        } else {
+            this.setText(top * cp);
+        }
     }
 
     public setTime(time: number) {
         this._curTime = time;
+        this._isInit = false;
     }
 
     public over() {
@@ -127,17 +141,18 @@ class Countdown extends egret.DisplayObjectContainer {
 
     private setProgress(per: number) {
         this._timeMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
-        var top = this._topTime ? this._topTime : 1;
-        var time = Math.round(top * per);
+    }
+
+    private setProgressBg(per: number) {
+        this._bgMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
+    }
+
+    private setText(time: number) {
         if (time <= 3 && time > 0 && parseInt(this._ct) > time) {
             this.blink();
         }
         this._ct = time.toString();
         this._text.text = DateUtils.getFormatBySecond(time, 3);
-    }
-
-    private setProgressBg(per: number) {
-        this._bgMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
     }
 
     private blink() {

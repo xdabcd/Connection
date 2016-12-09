@@ -18,9 +18,13 @@ class GridCmd {
 	public static TILE_MOVE: string = "tile_move";
 	public static TILE_CHANGE_EFFECT: string = "tile_change_effect";
 	public static TILE_CHANGE_TYPE: string = "tile_change_type";
+	public static TILE_CHANGE_TIMES: string = "tile_change_times";
+
+	public static NEW_ROW: string = "new_row";
 
 	public static SET_SELECT: string = "set_select";
 	public static SHAKE: string = "shake";
 	public static SHOW_CHESTS: string = "show_chests";
 	public static HIDE_CHESTS: string = "hide_chests";
+	public static UNLOCK_CHEST: string = "unlock_chest";
 }
