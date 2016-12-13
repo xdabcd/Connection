@@ -19,6 +19,10 @@ var GameScene = (function (_super) {
         AnchorUtils.setAnchorY(this._grid, 1);
         this.addChild(this._topBg = DisplayUtils.createBitmap("bg_png"));
         AnchorUtils.setAnchorX(this._topBg, 0.5);
+        this.addChild(this._topMask = new egret.Sprite);
+        DrawUtils.drawRect(this._topMask, this._topBg.width, this._topBg.height, 0xffffff);
+        AnchorUtils.setAnchorX(this._topMask, 0.5);
+        this._topMask.visible = false;
         this.addChild(this._scoreBg = DisplayUtils.createBitmap("score_bg_png"));
         AnchorUtils.setAnchor(this._scoreBg, 0.5);
         this.addChild(this._score = new Label);
@@ -50,6 +54,8 @@ var GameScene = (function (_super) {
         this._grid.y = h;
         this._topBg.x = w / 2;
         this._topBg.y = 0;
+        this._topMask.x = w / 2;
+        this._topMask.y = 0;
         this._scoreBg.x = w / 2;
         this._scoreBg.y = 200;
         this._score.x = this._scoreBg.x;
@@ -95,6 +101,22 @@ var GameScene = (function (_super) {
         this._countdown.setTime(time);
     };
     /**
+     * 得分晋级
+     */
+    p.riseRank = function (rank) {
+        var _this = this;
+        this._topMask.visible = true;
+        this._topMask.alpha = 1;
+        var tw = new Tween(this._topMask);
+        tw.to = { alpha: 0 };
+        tw.duration = 200;
+        tw.callBack = function () {
+            _this._topMask.visible = false;
+        };
+        tw.start();
+        this._scoreBg.texture = RES.getRes("score_bg_" + rank + "_png");
+    };
+    /**
      * 更新得分
      */
     p.updateScore = function (score, isAdd) {
@@ -122,35 +144,24 @@ var GameScene = (function (_super) {
         score.strokeColor = col1;
         var tw1 = new Tween(score);
         tw1.duration = 20;
-        tw1.callBack = function () {
-            score.text = text;
-        };
         tw1.start();
         var tw2 = new Tween(score);
+        tw2.from = { text: text };
         tw2.delay = tw1.delay + tw1.duration;
         tw2.duration = 70;
-        tw2.callBack = function () {
-            score.textColor = col2;
-            score.strokeColor = col3;
-        };
         tw2.start();
         var tw3 = new Tween(score);
+        tw3.from = { textColor: col2, strokeColor: col3 };
         tw3.delay = tw2.delay + tw2.duration;
         tw3.duration = 90;
-        tw3.callBack = function () {
-            score.textColor = col0;
-            score.strokeColor = col1;
-        };
         tw3.start();
         var tw4 = new Tween(score);
+        tw4.from = { textColor: col0, strokeColor: col1 };
         tw4.delay = tw3.delay + tw3.duration;
         tw4.duration = 90;
-        tw4.callBack = function () {
-            score.textColor = col2;
-            score.strokeColor = col3;
-        };
         tw4.start();
         var tw5 = new Tween(score);
+        tw5.from = { textColor: col2, strokeColor: col3 };
         tw5.delay = tw4.delay + tw4.duration;
         tw5.duration = 40;
         tw5.callBack = function () {
@@ -163,6 +174,10 @@ var GameScene = (function (_super) {
      * 更新倍数
      */
     p.updateTimes = function (times) {
+        if (times == 0) {
+            this._times.text = "";
+            return;
+        }
         this._times.text = "x" + times;
     };
     /**
@@ -178,16 +193,16 @@ var GameScene = (function (_super) {
         t.y = tr.y;
         var tw1 = new Tween(t);
         tw1.to = { y: this._times.y + 5 };
-        tw1.duration = 600;
+        tw1.duration = 500;
         tw1.start();
         var tw2 = new Tween(t);
         tw2.to = { x: this._times.x };
-        tw2.duration = 600;
+        tw2.duration = 500;
         tw2.ease = TweenEase.QuadOut;
         tw2.start();
         var tw3 = new Tween(t);
         tw3.to = { scaleY: 0.3 };
-        tw3.duration = 600;
+        tw3.duration = 500;
         tw3.ease = TweenEase.QuadOut;
         tw3.callBack = function () {
             t.scaleY = 1;
@@ -238,17 +253,20 @@ var GameScene = (function (_super) {
      * 显示时间完
      */
     p.showTimesUp = function () {
+        this._countdown.over();
         var hint = ObjectPool.pop("Hint");
         this._hintCon.addChild(hint);
         hint.y = -80;
         hint.show3("hint_times_up_png");
     };
     /**
-     * 游戏结束
+     * 显示最后的奖励
      */
-    p.gameOver = function () {
-        this._countdown.over();
-        this.showTimesUp();
+    p.showLastAward = function () {
+        var hint = ObjectPool.pop("Hint");
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show2("hint_hurray_png");
     };
     /**
      * 显示称赞
@@ -258,6 +276,43 @@ var GameScene = (function (_super) {
         this._hintCon.addChild(hint);
         hint.y = -80;
         hint.show1("hint_praise_" + type + "_png", 0.5, 0.35);
+    };
+    /**
+     * 游戏结束
+     */
+    p.gameOver = function () {
+    };
+    /**
+     * 奖励
+     */
+    p.award = function (pos, effect, times) {
+        this.updateTimes(times);
+        var tr = this._grid.getAbsPosition(pos.x, pos.y);
+        var tile = ObjectPool.pop("Tile");
+        tile.reset();
+        tile.effect = effect;
+        tile.setOnTouch(null);
+        tile.addTo(this._timesCon);
+        tile.x = this._times.x;
+        tile.y = this._times.y;
+        tile.scaleX = tile.scaleY = 0.3;
+        var tw1 = new Tween(tile);
+        tw1.to = { y: tr.y };
+        tw1.duration = 500;
+        tw1.start();
+        var tw2 = new Tween(tile);
+        tw2.to = { x: tr.x };
+        tw2.duration = 500;
+        tw2.ease = TweenEase.QuadOut;
+        tw2.start();
+        var tw3 = new Tween(tile);
+        tw3.to = { scaleX: 1, scaleY: 1 };
+        tw3.duration = 500;
+        tw3.ease = TweenEase.QuadOut;
+        tw3.callBack = function () {
+            tile.destroy();
+        };
+        tw3.start();
     };
     /**
      * 打开

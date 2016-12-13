@@ -54,6 +54,11 @@ class GameModel extends BaseModel {
     public addScore(delay: number, score: number, callBack: Function) {
         score *= this._times + (this._isFire ? 10 : 0);
         this.setTimeout(delay + 1200, () => {
+            if (this._score < 10000 && this._score + score >= 10000) {
+                this.applyFunc(GameCmd.RISE_RANK, 1);
+            } else if (this._score < 100000 && this._score + score >= 100000) {
+                this.applyFunc(GameCmd.RISE_RANK, 2);
+            }
             this._score += score;
             this.updateScore(true);
         });

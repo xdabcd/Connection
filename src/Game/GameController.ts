@@ -16,11 +16,15 @@ class GameController extends BaseController {
 		this.registerFunc(GameCmd.SHOW_GO, this.showGO, this);
 		this.registerFunc(GameCmd.SHOW_UNLOCK, this.showUnlock, this);
 		this.registerFunc(GameCmd.SHOW_PRAISE, this.showPraise, this);
+		this.registerFunc(GameCmd.SHOW_LAST_AWARD, this.showLastAward, this);
+		this.registerFunc(GameCmd.AWARD, this.award, this);
+		this.registerFunc(GameCmd.SHOW_TIME_UP, this.showTimeUp, this);
 
 		this.registerFunc(GameCmd.UPDATE_TIME, this.updateTime, this);
 		this.registerFunc(GameCmd.UPDATE_SCORE, this.updateScore, this);
 		this.registerFunc(GameCmd.ADD_TIMES, this.addTimes, this);
 
+		this.registerFunc(GameCmd.RISE_RANK, this.riseRank, this);
 		this.registerFunc(GameCmd.FIRE, this.fire, this);
 		this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
 		this.registerFunc(GameCmd.ADD_TIME, this.addTime, this);
@@ -55,6 +59,13 @@ class GameController extends BaseController {
 	}
 
 	/**
+	 * 显示时间完了
+	 */
+	private showTimeUp() {
+		this.scene.showTimesUp();
+	}
+
+	/**
 	 * 进入爆炸模式
 	 */
 	private fire() {
@@ -84,6 +95,20 @@ class GameController extends BaseController {
 	}
 
 	/**
+	 * 显示最后的奖励
+	 */
+	private showLastAward() {
+		this.scene.showLastAward();
+	}
+
+	/**
+	 * 奖励
+	 */
+	private award(pos: Vector2, effect: TileEffect, times: number) {
+		this.scene.award(pos, effect, times);
+	}
+
+	/**
 	 * 更新倒计时
 	 */
 	private updateTime(time: number) {
@@ -95,6 +120,13 @@ class GameController extends BaseController {
 	 */
 	private updateScore(score: number, isAdd: boolean = false) {
 		this.scene.updateScore(score, isAdd);
+	}
+
+	/**
+	 * 得分晋级
+	 */
+	private riseRank(rank: number) {
+		this.scene.riseRank(rank);
 	}
 
 	/**

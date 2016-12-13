@@ -26,6 +26,10 @@ class Tile extends egret.DisplayObjectContainer {
     private _icon: egret.Bitmap;
     /** 钥匙 */
     private _key: egret.Bitmap;
+    /** 道具进入动画 */
+    private _itemInFx: Fx;
+    /** 道具动画 */
+    private _itemFx: Fx;
     /** 倍数 */
     private _times: Times;
     /** 时间动画 */
@@ -54,10 +58,12 @@ class Tile extends egret.DisplayObjectContainer {
         this._con.alpha = 1;
         this.alpha = 1;
         this.rotation = 0;
-        this._signIcon.visible = false;
         this._isSelect = false;
-        this._touchObj.touchEnabled = true;
         this._isShake = false;
+        this._touchObj.touchEnabled = true;
+        this._signIcon.visible = false;
+        this._key.visible = false;
+        this._times.visible = false;
     }
 
     /**
@@ -122,6 +128,9 @@ class Tile extends egret.DisplayObjectContainer {
                 this._icon.visible = true;
             });
             fx.play();
+            this._itemInFx = fx;
+        } else {
+            this._icon.visible = true;
         }
     }
 
@@ -153,7 +162,13 @@ class Tile extends egret.DisplayObjectContainer {
             this._timeFx.visible = true;
             this._icon.visible = false;
         } else if (this._effect > 0) {
-
+            if (hl) {
+                this._itemFx.play();
+            } else {
+                this._itemFx.stopAtFirstFrame();
+            }
+            this._itemFx.visible = true;
+            this._icon.visible = false;
         } else {
             if (!this._isSelect) {
                 var duration = 500;
@@ -192,7 +207,8 @@ class Tile extends egret.DisplayObjectContainer {
             this._timeFx.visible = false;
             this._icon.visible = true;
         } else if (this._effect > 0) {
-
+            this._itemFx.visible = false;
+            this._icon.visible = true;
         } else {
             this.setIcon("gem_" + this._type + "_png");
         }
@@ -204,6 +220,10 @@ class Tile extends egret.DisplayObjectContainer {
      */
     public remove(duration: number) {
         this.unEnable();
+        if (this._itemInFx) {
+            this._itemInFx.destroy();
+            this._icon.visible = true;
+        }
         this.pos = new Vector2(-100, -100);
         var self = this;
         this.sign = false;
@@ -375,8 +395,25 @@ class Tile extends egret.DisplayObjectContainer {
      */
     public set effect(value: TileEffect) {
         this._effect = value;
-        if (this._effect == TileEffect.NONE) return;
-        this.setIcon("item_" + value + "_png");
+        if (this._effect) {
+            this.setIcon("item_" + value + "_png");
+            switch (this._effect) {
+                case TileEffect.BOMB:
+                    this._itemFx = ObjectPool.pop("ItemFireSelectFx") as ItemFireSelectFx;
+                    break;
+                case TileEffect.CROSS:
+                    this._itemFx = ObjectPool.pop("ItemWaterSelectFx") as ItemWaterSelectFx;
+                    break;
+                case TileEffect.KIND:
+                    this._itemFx = ObjectPool.pop("ItemThunderSelectFx") as ItemThunderSelectFx;
+                    break;
+                case TileEffect.RANDOM:
+                    this._itemFx = ObjectPool.pop("ItemStormSelectFx") as ItemStormSelectFx;
+                    break;
+            }
+            this.addChild(this._itemFx);
+            this._itemFx.visible = false;
+        }
     }
 
     /**
@@ -398,9 +435,6 @@ class Tile extends egret.DisplayObjectContainer {
      */
     public set time(value: boolean) {
         this._time = value;
-        if (this._timeFx) {
-            this._timeFx.destroy();
-        }
         if (this._time) {
             this.setIcon("time_" + this._type + "_png");
             switch (this._type) {
@@ -452,6 +486,18 @@ class Tile extends egret.DisplayObjectContainer {
      * 销毁
      */
     public destroy() {
+        if (this._itemInFx) {
+            this._itemInFx.destroy();
+            this._itemInFx = null;
+        }
+        if (this._timeFx) {
+            this._timeFx.destroy();
+            this._timeFx = null;
+        }
+        if (this._itemFx) {
+            this._itemFx.destroy();
+            this._itemFx = null;
+        }
         TweenManager.removeTween(this);
         DisplayUtils.removeFromParent(this);
         ObjectPool.push(this);

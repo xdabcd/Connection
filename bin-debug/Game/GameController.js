@@ -16,9 +16,13 @@ var GameController = (function (_super) {
         this.registerFunc(GameCmd.SHOW_GO, this.showGO, this);
         this.registerFunc(GameCmd.SHOW_UNLOCK, this.showUnlock, this);
         this.registerFunc(GameCmd.SHOW_PRAISE, this.showPraise, this);
+        this.registerFunc(GameCmd.SHOW_LAST_AWARD, this.showLastAward, this);
+        this.registerFunc(GameCmd.AWARD, this.award, this);
+        this.registerFunc(GameCmd.SHOW_TIME_UP, this.showTimeUp, this);
         this.registerFunc(GameCmd.UPDATE_TIME, this.updateTime, this);
         this.registerFunc(GameCmd.UPDATE_SCORE, this.updateScore, this);
         this.registerFunc(GameCmd.ADD_TIMES, this.addTimes, this);
+        this.registerFunc(GameCmd.RISE_RANK, this.riseRank, this);
         this.registerFunc(GameCmd.FIRE, this.fire, this);
         this.registerFunc(GameCmd.ADD_SCORE, this.addScore, this);
         this.registerFunc(GameCmd.ADD_TIME, this.addTime, this);
@@ -49,6 +53,12 @@ var GameController = (function (_super) {
         this.scene.initTime(top);
     };
     /**
+     * 显示时间完了
+     */
+    p.showTimeUp = function () {
+        this.scene.showTimesUp();
+    };
+    /**
      * 进入爆炸模式
      */
     p.fire = function () {
@@ -74,6 +84,18 @@ var GameController = (function (_super) {
         this.scene.showPraise(type);
     };
     /**
+     * 显示最后的奖励
+     */
+    p.showLastAward = function () {
+        this.scene.showLastAward();
+    };
+    /**
+     * 奖励
+     */
+    p.award = function (pos, effect, times) {
+        this.scene.award(pos, effect, times);
+    };
+    /**
      * 更新倒计时
      */
     p.updateTime = function (time) {
@@ -85,6 +107,12 @@ var GameController = (function (_super) {
     p.updateScore = function (score, isAdd) {
         if (isAdd === void 0) { isAdd = false; }
         this.scene.updateScore(score, isAdd);
+    };
+    /**
+     * 得分晋级
+     */
+    p.riseRank = function (rank) {
+        this.scene.riseRank(rank);
     };
     /**
      * 增加倍率

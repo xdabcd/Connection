@@ -16,6 +16,7 @@ class Hint extends egret.DisplayObjectContainer {
         AnchorUtils.setAnchorX(this._sprite, anchorX);
         AnchorUtils.setAnchorY(this._sprite, anchorY);
 
+        this._sprite.y = 0;
         this._sprite.scaleX = this._sprite.scaleY = 3.5;
         this._sprite.alpha = 0.35;
 
@@ -47,7 +48,7 @@ class Hint extends egret.DisplayObjectContainer {
         AnchorUtils.setAnchorX(this._sprite, anchorX);
         AnchorUtils.setAnchorY(this._sprite, anchorY);
 
-        this._sprite.y -= 180;
+        this._sprite.y = -180;
         this._sprite.alpha = 0.35;
         this._sprite.scaleX = this._sprite.scaleY = 1;
 
@@ -71,6 +72,7 @@ class Hint extends egret.DisplayObjectContainer {
         AnchorUtils.setAnchorY(this._sprite, anchorY);
 
         this._sprite.alpha = 0;
+        this._sprite.y = 0;
         this._sprite.scaleX = this._sprite.scaleY = 0.35;
 
         var tw1 = new Tween(this._sprite);

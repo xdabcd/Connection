@@ -25,17 +25,19 @@ var Tile = (function (_super) {
         this._con.alpha = 1;
         this.alpha = 1;
         this.rotation = 0;
-        this._signIcon.visible = false;
         this._isSelect = false;
-        this._touchObj.touchEnabled = true;
         this._isShake = false;
+        this._touchObj.touchEnabled = true;
+        this._signIcon.visible = false;
+        this._key.visible = false;
+        this._times.visible = false;
     };
     /**
      * 添加触摸
      */
     p.addTouch = function () {
         this.addChild(this._touchObj = new egret.Sprite);
-        DrawUtils.drawCircle(this._touchObj, 30, 0);
+        DrawUtils.drawCircle(this._touchObj, 35, 0);
         this._touchObj.alpha = 0;
         this._touchObj.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onTouch, this);
         this._touchObj.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.onTouch, this);
@@ -89,6 +91,10 @@ var Tile = (function (_super) {
                 _this._icon.visible = true;
             });
             fx.play();
+            this._itemInFx = fx;
+        }
+        else {
+            this._icon.visible = true;
         }
     };
     d(p, "sign",undefined
@@ -123,6 +129,14 @@ var Tile = (function (_super) {
             this._icon.visible = false;
         }
         else if (this._effect > 0) {
+            if (hl) {
+                this._itemFx.play();
+            }
+            else {
+                this._itemFx.stopAtFirstFrame();
+            }
+            this._itemFx.visible = true;
+            this._icon.visible = false;
         }
         else {
             if (!this._isSelect) {
@@ -164,6 +178,8 @@ var Tile = (function (_super) {
             this._icon.visible = true;
         }
         else if (this._effect > 0) {
+            this._itemFx.visible = false;
+            this._icon.visible = true;
         }
         else {
             this.setIcon("gem_" + this._type + "_png");
@@ -175,6 +191,10 @@ var Tile = (function (_super) {
      */
     p.remove = function (duration) {
         this.unEnable();
+        if (this._itemInFx) {
+            this._itemInFx.destroy();
+            this._icon.visible = true;
+        }
         this.pos = new Vector2(-100, -100);
         var self = this;
         this.sign = false;
@@ -348,9 +368,25 @@ var Tile = (function (_super) {
          */
         ,function (value) {
             this._effect = value;
-            if (this._effect == TileEffect.NONE)
-                return;
-            this.setIcon("item_" + value + "_png");
+            if (this._effect) {
+                this.setIcon("item_" + value + "_png");
+                switch (this._effect) {
+                    case TileEffect.BOMB:
+                        this._itemFx = ObjectPool.pop("ItemFireSelectFx");
+                        break;
+                    case TileEffect.CROSS:
+                        this._itemFx = ObjectPool.pop("ItemWaterSelectFx");
+                        break;
+                    case TileEffect.KIND:
+                        this._itemFx = ObjectPool.pop("ItemThunderSelectFx");
+                        break;
+                    case TileEffect.RANDOM:
+                        this._itemFx = ObjectPool.pop("ItemStormSelectFx");
+                        break;
+                }
+                this.addChild(this._itemFx);
+                this._itemFx.visible = false;
+            }
         }
     );
     d(p, "key",undefined
@@ -375,9 +411,6 @@ var Tile = (function (_super) {
          */
         ,function (value) {
             this._time = value;
-            if (this._timeFx) {
-                this._timeFx.destroy();
-            }
             if (this._time) {
                 this.setIcon("time_" + this._type + "_png");
                 switch (this._type) {
@@ -431,6 +464,18 @@ var Tile = (function (_super) {
      * 销毁
      */
     p.destroy = function () {
+        if (this._itemInFx) {
+            this._itemInFx.destroy();
+            this._itemInFx = null;
+        }
+        if (this._timeFx) {
+            this._timeFx.destroy();
+            this._timeFx = null;
+        }
+        if (this._itemFx) {
+            this._itemFx.destroy();
+            this._itemFx = null;
+        }
         TweenManager.removeTween(this);
         DisplayUtils.removeFromParent(this);
         ObjectPool.push(this);

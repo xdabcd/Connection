@@ -32,7 +32,7 @@ class Grid extends BaseScene {
 		}, this);
 		KeyboardUtils.addKeyDown((key) => {
 			if (key == Keyboard.LEFT) {
-				TimerManager.setTimeScale(0.05);
+				TimerManager.setTimeScale(0.1);
 			}
 		}, this);
 		KeyboardUtils.addKeyUp((key) => {
@@ -42,7 +42,7 @@ class Grid extends BaseScene {
 		}, this);
 		KeyboardUtils.addKeyDown((key) => {
 			if (key == Keyboard.RIGHT) {
-				TimerManager.setTimeScale(5);
+				TimerManager.setTimeScale(10);
 			}
 		}, this);
     }
@@ -203,6 +203,10 @@ class Grid extends BaseScene {
 	 */
 	public createTile(tileData: TileData) {
 		var pos = tileData.pos;
+		var t = this.findTile(pos);
+		if (t) {
+			t.destroy();
+		}
 		var tile = ObjectPool.pop("Tile") as Tile;
 		tile.reset();
 		tile.pos = pos.clone();

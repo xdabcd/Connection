@@ -41,8 +41,8 @@ class Main extends egret.DisplayObjectContainer {
         if (event.groupName == "preload") {
             /** 打开加载界面 */
             this._loadingScene = SceneManager.instance.open(SceneID.Loading) as LoadingScene;
-            RES.loadGroup("loading");
-        } else if (event.groupName == "loading") {
+            RES.loadGroup("game");
+        } else if (event.groupName == "game") {
             RES.removeEventListener(RES.ResourceEvent.GROUP_COMPLETE, this.onResourceLoadComplete, this);
             RES.removeEventListener(RES.ResourceEvent.GROUP_LOAD_ERROR, this.onResourceLoadError, this);
             RES.removeEventListener(RES.ResourceEvent.GROUP_PROGRESS, this.onResourceProgress, this);
@@ -71,7 +71,7 @@ class Main extends egret.DisplayObjectContainer {
      * preload资源组加载进度
      */
     private onResourceProgress(event: RES.ResourceEvent): void {
-        if (event.groupName == "loading") {
+        if (event.groupName == "game") {
             this._loadingScene.setProgress(event.itemsLoaded, event.itemsTotal);
         }
     }

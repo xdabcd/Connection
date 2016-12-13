@@ -18,7 +18,7 @@ var GridModel = (function (_super) {
         this._ver = GameData.ver;
         this._times = 0;
         this._isFire = false;
-        this.addTimes(0);
+        this.addTimes();
         this._selectArr = [];
         this._lastAdd = -1;
         this._connectArr = [];
@@ -27,13 +27,6 @@ var GridModel = (function (_super) {
         this.initTileList();
         this.repair();
         this._newKey = true;
-    };
-    /**
-     * 结束
-     */
-    p.over = function () {
-        this.touchEnd();
-        this.setState(GridState.Over);
     };
     /**
      * 触摸格子
@@ -85,8 +78,9 @@ var GridModel = (function (_super) {
      * 触摸结束
      */
     p.touchEnd = function () {
-        if (!this.isState(GridState.Select))
+        if (!this.isState(GridState.Select) && !this.isState(GridState.Over)) {
             return;
+        }
         var length = this._selectArr.length;
         for (var i = 0; i < length; i++) {
             this.unselect(this._selectArr[i]);
@@ -297,6 +291,127 @@ var GridModel = (function (_super) {
             _this.updateMovePosition(moveList);
             _this.setState(GridState.Idle);
         });
+    };
+    /**
+     * 结束
+     */
+    p.over = function () {
+        var flag = this.isState(GridState.Select);
+        this.setState(GridState.Over);
+        if (flag) {
+            this.touchEnd();
+        }
+    };
+    /**
+     * 清理
+     */
+    p.clear = function () {
+        var _this = this;
+        var t = 0;
+        var _loop_1 = function(y) {
+            var _loop_2 = function(x) {
+                var td = this_1.getTile(x, y);
+                if (td.times) {
+                    this_1.setTimeout(t, function () {
+                        _this._tileList[x][y] = _this.addTile(x, y, 0, TileEffect.BOMB);
+                    });
+                    t += this_1.clearInterval;
+                }
+                else if (td.time) {
+                    this_1.setTimeout(t, function () {
+                        _this._tileList[x][y] = _this.addTile(x, y, 0, TileEffect.KIND);
+                    });
+                    t += this_1.clearInterval;
+                }
+            };
+            for (var x = 0; x < this_1._hor; x++) {
+                _loop_2(x);
+            }
+        };
+        var this_1 = this;
+        for (var y = 0; y < this._ver; y++) {
+            _loop_1(y);
+        }
+        this.setTimeout(t + this.interval, function () {
+            _this._selectArr = [];
+            for (var y = 0; y < _this._ver; y++) {
+                for (var x = 0; x < _this._hor; x++) {
+                    var td = _this.getTile(x, y);
+                    if (td.effect) {
+                        _this._selectArr.push(td);
+                    }
+                }
+            }
+            var length = _this._selectArr.length;
+            if (length) {
+                _this._signArr = [];
+                _this.getSign(_this._selectArr);
+                _this._curEffect = TileEffect.NONE;
+                _this._connectArr.push(0);
+                _this._removeArr.push(0);
+                _this._effectCntArr = [];
+                _this._isShake = false;
+                var duration = 0;
+                for (var i = 0; i < length; i++) {
+                    var tileData = _this._selectArr[i];
+                    var x = tileData.pos.x;
+                    var y = tileData.pos.y;
+                    var t_1 = _this.delTile(x, y, null, _this.clearInterval * i);
+                    duration = Math.max(duration, t_1);
+                }
+                _this.setTimeout(duration + _this.interval, function () {
+                    _this.repair();
+                });
+            }
+            else {
+                _this.lastAward();
+            }
+        });
+    };
+    /**
+     * 最后的奖励
+     */
+    p.lastAward = function () {
+        var _this = this;
+        var arr = this.randomTiles(this._times);
+        this._times = 0;
+        if (arr.length) {
+            var rand = function () {
+                var r = Math.random();
+                if (r < 0.6) {
+                    return TileEffect.BOMB;
+                }
+                else if (r < 0.85) {
+                    return TileEffect.CROSS;
+                }
+                else {
+                    return TileEffect.KIND;
+                }
+            };
+            this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_LAST_AWARD);
+            this.setTimeout(this.hintTime, function () {
+                var t = _this.awardTime;
+                var t0 = 0;
+                var _loop_3 = function(i) {
+                    var pos = arr[i].pos;
+                    var effect = rand();
+                    _this.setTimeout(t, function () {
+                        _this._tileList[pos.x][pos.y] = _this.addTile(pos.x, pos.y, 0, effect);
+                    });
+                    _this.setTimeout(t0, function () {
+                        _this.applyControllerFunc(ControllerID.Game, GameCmd.AWARD, pos, effect, arr.length - i - 1);
+                    });
+                    t0 += _this.awardInterval;
+                    t += _this.awardInterval;
+                };
+                for (var i = 0; i < arr.length; i++) {
+                    _loop_3(i);
+                }
+                _this.setTimeout(t + _this.interval, function () {
+                    _this.clear();
+                });
+            });
+        }
     };
     /**
      * 标记
@@ -530,19 +645,10 @@ var GridModel = (function (_super) {
                     arr = tileData.info;
                 }
                 else {
-                    for (var i = 0; i < hor; i++) {
-                        for (var j = 0; j < ver; j++) {
-                            var td = this.getTile(i, j);
-                            if (td) {
-                                arr.push(td);
-                            }
-                        }
-                    }
-                    arr.sort(SortUtils.random);
+                    arr = this.randomTiles(23);
                     tileData.info = arr;
                 }
-                var l = Math.min(arr.length, 23);
-                for (var i = 0; i < l; i++) {
+                for (var i = 0; i < arr.length; i++) {
                     add(arr[i].pos.x, arr[i].pos.y);
                 }
                 break;
@@ -553,6 +659,8 @@ var GridModel = (function (_super) {
      * 进入爆炸模式
      */
     p.fire = function () {
+        if (this.isState(GridState.Over) || this.isState(GridState.End))
+            return;
         this._isFire = true;
         this.applyFunc(GameCmd.FIRE);
         this.applyControllerFunc(ControllerID.Game, GameCmd.FIRE);
@@ -585,6 +693,7 @@ var GridModel = (function (_super) {
      * 添加倍率
      */
     p.addTimes = function (delay, pos, ts) {
+        if (delay === void 0) { delay = 0; }
         if (pos === void 0) { pos = null; }
         if (ts === void 0) { ts = 0; }
         this._times += 1;
@@ -621,7 +730,7 @@ var GridModel = (function (_super) {
         this._keyCount += 1;
         this.applyFunc(GridCmd.UNLOCK_CHEST, pos, type);
         if (this._keyCount >= 5) {
-            this.setTimeout(1300, function () {
+            this.setTimeout(this.hintTime, function () {
                 _this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_UNLOCK);
                 _this.hideChests();
                 _this.newRow();
@@ -846,9 +955,10 @@ var GridModel = (function (_super) {
      */
     p.moveTile = function (tileData, target) {
         var _this = this;
-        var duration = this.cacuMoveTime(tileData.pos, target);
+        var t = RandomUtils.limit(0, 80);
+        var duration = this.cacuMoveTime(tileData.pos, target) + t;
         var moveInfo = new MoveInfo(tileData, target, duration);
-        this.setTimeout(RandomUtils.limit(0, 80), function () {
+        this.setTimeout(t, function () {
             _this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
         });
         return moveInfo;
@@ -895,6 +1005,25 @@ var GridModel = (function (_super) {
     p.randomType = function () {
         return RandomUtils.limitInteger(1, 4);
     };
+    /**
+     * 随机格子
+     */
+    p.randomTiles = function (count) {
+        var arr = [];
+        for (var i = 0; i < this._hor; i++) {
+            for (var j = 0; j < this._ver; j++) {
+                var td = this.getTile(i, j);
+                if (td) {
+                    arr.push(td);
+                }
+            }
+        }
+        arr.sort(SortUtils.random);
+        if (count < arr.length) {
+            arr.splice(count, arr.length - count);
+        }
+        return arr;
+    };
     d(p, "curSelectType"
         /**
          * 当前选择类型
@@ -928,8 +1057,29 @@ var GridModel = (function (_super) {
      * 设置状态
      */
     p.setState = function (state) {
-        if (this.isState(GridState.Over))
+        var _this = this;
+        var end = function () {
+            _this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_TIME_UP);
+            _this.setTimeout(_this.hintTime, function () {
+                _this._state = GridState.End;
+                _this.clear();
+            });
+        };
+        if (this.isState(GridState.Over)) {
+            if (state == GridState.Idle) {
+                end();
+            }
             return;
+        }
+        else if (this.isState(GridState.Idle) && state == GridState.Over) {
+            end();
+        }
+        if (this.isState(GridState.End)) {
+            if (state == GridState.Idle) {
+                this.clear();
+            }
+            return;
+        }
         this._state = state;
     };
     /**
@@ -967,7 +1117,7 @@ var GridModel = (function (_super) {
          * 移除间隔
          */
         ,function () {
-            return 100;
+            return 60;
         }
     );
     d(p, "effectInterval"
@@ -976,6 +1126,38 @@ var GridModel = (function (_super) {
          */
         ,function () {
             return 80;
+        }
+    );
+    d(p, "clearInterval"
+        /**
+         * 清理间隔
+         */
+        ,function () {
+            return 200;
+        }
+    );
+    d(p, "hintTime"
+        /**
+         * 显示提示的时间
+         */
+        ,function () {
+            return 1200;
+        }
+    );
+    d(p, "awardTime"
+        /**
+         * 奖励时间
+         */
+        ,function () {
+            return 500;
+        }
+    );
+    d(p, "awardInterval"
+        /**
+         * 奖励间隔
+         */
+        ,function () {
+            return 400;
         }
     );
     return GridModel;
@@ -992,5 +1174,6 @@ var GridState;
     GridState[GridState["Remove"] = 3] = "Remove";
     GridState[GridState["Repair"] = 4] = "Repair";
     GridState[GridState["Over"] = 5] = "Over";
+    GridState[GridState["End"] = 6] = "End";
 })(GridState || (GridState = {}));
 //# sourceMappingURL=GridModel.js.map

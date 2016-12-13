@@ -51,6 +51,12 @@ var GameModel = (function (_super) {
         var _this = this;
         score *= this._times + (this._isFire ? 10 : 0);
         this.setTimeout(delay + 1200, function () {
+            if (_this._score < 10000 && _this._score + score >= 10000) {
+                _this.applyFunc(GameCmd.RISE_RANK, 1);
+            }
+            else if (_this._score < 100000 && _this._score + score >= 100000) {
+                _this.applyFunc(GameCmd.RISE_RANK, 2);
+            }
             _this._score += score;
             _this.updateScore(true);
         });

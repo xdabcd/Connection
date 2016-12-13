@@ -38,9 +38,9 @@ var Main = (function (_super) {
         if (event.groupName == "preload") {
             /** 打开加载界面 */
             this._loadingScene = SceneManager.instance.open(SceneID.Loading);
-            RES.loadGroup("loading");
+            RES.loadGroup("game");
         }
-        else if (event.groupName == "loading") {
+        else if (event.groupName == "game") {
             RES.removeEventListener(RES.ResourceEvent.GROUP_COMPLETE, this.onResourceLoadComplete, this);
             RES.removeEventListener(RES.ResourceEvent.GROUP_LOAD_ERROR, this.onResourceLoadError, this);
             RES.removeEventListener(RES.ResourceEvent.GROUP_PROGRESS, this.onResourceProgress, this);
@@ -66,7 +66,7 @@ var Main = (function (_super) {
      * preload资源组加载进度
      */
     p.onResourceProgress = function (event) {
-        if (event.groupName == "loading") {
+        if (event.groupName == "game") {
             this._loadingScene.setProgress(event.itemsLoaded, event.itemsTotal);
         }
     };

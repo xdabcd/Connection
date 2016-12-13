@@ -40,16 +40,16 @@ var Chests = (function (_super) {
             this.setKey(x, y, type);
             var tw1 = new Tween(this._key);
             tw1.to = { y: chest.y + 10 };
-            tw1.duration = 600;
+            tw1.duration = 500;
             tw1.start();
             var tw2 = new Tween(this._key);
             tw2.to = { x: chest.x };
-            tw2.duration = 600;
+            tw2.duration = 500;
             tw2.ease = TweenEase.QuadOut;
             tw2.start();
             var tw3 = new Tween(this._key);
-            tw3.to = { rotation: -440 };
-            tw3.duration = 600;
+            tw3.to = { rotation: -200, scaleX: 1.1, scaleY: 1.1 };
+            tw3.duration = 500;
             tw3.ease = TweenEase.QuadOut;
             tw3.start();
             var t4 = new Tween(this._key);
@@ -85,9 +85,10 @@ var Chests = (function (_super) {
         }
     };
     p.setKey = function (x, y, type) {
-        this._key.texture = RES.getRes("key_" + type + "_png");
+        this._key.texture = RES.getRes("key_" + 5 + "_png");
         this._key.visible = true;
         this._key.alpha = 1;
+        this._key.scaleX = this._key.scaleY = 1;
         this._key.x = x;
         this._key.y = y;
         AnchorUtils.setAnchor(this._key, 0.5);

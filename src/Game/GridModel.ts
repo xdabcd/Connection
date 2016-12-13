@@ -33,7 +33,7 @@ class GridModel extends BaseModel {
 
 		this._times = 0;
 		this._isFire = false;
-		this.addTimes(0);
+		this.addTimes();
 		this._selectArr = [];
 		this._lastAdd = -1;
 		this._connectArr = [];
@@ -44,13 +44,7 @@ class GridModel extends BaseModel {
 		this._newKey = true;
 	}
 
-	/**
-	 * 结束
-	 */
-	public over() {
-		this.touchEnd();
-		this.setState(GridState.Over);
-	}
+
 
 	/**
 	 * 触摸格子
@@ -102,7 +96,9 @@ class GridModel extends BaseModel {
 	 * 触摸结束
 	 */
 	public touchEnd() {
-		if (!this.isState(GridState.Select)) return;
+		if (!this.isState(GridState.Select) && !this.isState(GridState.Over)) {
+			return;
+		}
 
 		var length = this._selectArr.length;
 		for (let i = 0; i < length; i++) {
@@ -312,6 +308,118 @@ class GridModel extends BaseModel {
 			this.updateMovePosition(moveList);
 			this.setState(GridState.Idle);
 		});
+	}
+
+	/**
+	 * 结束
+	 */
+	public over() {
+		let flag = this.isState(GridState.Select);
+		this.setState(GridState.Over);
+		if (flag) {
+			this.touchEnd();
+		}
+	}
+
+	/**
+	 * 清理
+	 */
+	private clear() {
+		var t = 0;
+		for (let y = 0; y < this._ver; y++) {
+			for (let x = 0; x < this._hor; x++) {
+				let td = this.getTile(x, y);
+				if (td.times) {
+					this.setTimeout(t, () => {
+						this._tileList[x][y] = this.addTile(x, y, 0, TileEffect.BOMB);
+					})
+					t += this.clearInterval;
+				} else if (td.time) {
+					this.setTimeout(t, () => {
+						this._tileList[x][y] = this.addTile(x, y, 0, TileEffect.KIND);
+					})
+					t += this.clearInterval;
+				}
+			}
+		}
+		this.setTimeout(t + this.interval, () => {
+			this._selectArr = [];
+			for (let y = 0; y < this._ver; y++) {
+				for (let x = 0; x < this._hor; x++) {
+					let td = this.getTile(x, y);
+					if (td.effect) {
+						this._selectArr.push(td);
+					}
+				}
+			}
+
+			var length = this._selectArr.length;
+			if (length) {
+				this._signArr = [];
+				this.getSign(this._selectArr);
+				this._curEffect = TileEffect.NONE;
+				this._connectArr.push(0);
+				this._removeArr.push(0);
+
+				this._effectCntArr = [];
+				this._isShake = false;
+				var duration = 0;
+				for (let i = 0; i < length; i++) {
+					let tileData = this._selectArr[i];
+					let x = tileData.pos.x;
+					let y = tileData.pos.y;
+					let t = this.delTile(x, y, null, this.clearInterval * i);
+					duration = Math.max(duration, t);
+				}
+
+				this.setTimeout(duration + this.interval, () => {
+					this.repair();
+				});
+			} else {
+				this.lastAward();
+			}
+		});
+	}
+
+	/**
+	 * 最后的奖励
+	 */
+	public lastAward() {
+		var arr = this.randomTiles(this._times);
+		this._times = 0;
+		if (arr.length) {
+			var rand = () => {
+				var r = Math.random();
+				if (r < 0.6) {
+					return TileEffect.BOMB;
+				} else if (r < 0.85) {
+					return TileEffect.CROSS;
+				} else {
+					return TileEffect.KIND;
+				}
+			};
+			this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_LAST_AWARD);
+
+			this.setTimeout(this.hintTime, () => {
+				var t = this.awardTime;
+				var t0 = 0;
+				for (let i = 0; i < arr.length; i++) {
+					let pos = arr[i].pos;
+					let effect = rand();
+					this.setTimeout(t, () => {
+						this._tileList[pos.x][pos.y] = this.addTile(pos.x, pos.y, 0, effect);
+					});
+					this.setTimeout(t0, () => {
+						this.applyControllerFunc(ControllerID.Game, GameCmd.AWARD, pos, effect, arr.length - i - 1);
+					});
+					t0 += this.awardInterval;
+					t += this.awardInterval;
+				}
+				this.setTimeout(t + this.interval, () => {
+					this.clear();
+				});
+			});
+		}
 	}
 
 	/**
@@ -543,19 +651,10 @@ class GridModel extends BaseModel {
 				if (tileData.info) {
 					arr = tileData.info;
 				} else {
-					for (let i = 0; i < hor; i++) {
-						for (let j = 0; j < ver; j++) {
-							var td = this.getTile(i, j);
-							if (td) {
-								arr.push(td);
-							}
-						}
-					}
-					arr.sort(SortUtils.random);
+					arr = this.randomTiles(23);
 					tileData.info = arr;
 				}
-				let l = Math.min(arr.length, 23);
-				for (let i = 0; i < l; i++) {
+				for (let i = 0; i < arr.length; i++) {
 					add(arr[i].pos.x, arr[i].pos.y);
 				}
 				break;
@@ -567,6 +666,7 @@ class GridModel extends BaseModel {
 	 * 进入爆炸模式
 	 */
 	private fire() {
+		if (this.isState(GridState.Over) || this.isState(GridState.End)) return;
 		this._isFire = true;
 		this.applyFunc(GameCmd.FIRE);
 		this.applyControllerFunc(ControllerID.Game, GameCmd.FIRE);
@@ -602,7 +702,7 @@ class GridModel extends BaseModel {
 	/**
 	 * 添加倍率
 	 */
-	private addTimes(delay: number, pos: Vector2 = null, ts: number = 0) {
+	private addTimes(delay: number = 0, pos: Vector2 = null, ts: number = 0) {
 		this._times += 1;
 		this.updateTimes();
 		this.applyControllerFunc(ControllerID.Game, GameCmd.ADD_TIMES, delay, pos, ts);
@@ -640,7 +740,7 @@ class GridModel extends BaseModel {
 		this._keyCount += 1;
 		this.applyFunc(GridCmd.UNLOCK_CHEST, pos, type);
 		if (this._keyCount >= 5) {
-			this.setTimeout(1300, () => {
+			this.setTimeout(this.hintTime, () => {
 				this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_UNLOCK);
 				this.hideChests();
 				this.newRow();
@@ -875,9 +975,10 @@ class GridModel extends BaseModel {
 	 * 移动格子
 	 */
 	private moveTile(tileData: TileData, target: Vector2): MoveInfo {
-		var duration = this.cacuMoveTime(tileData.pos, target);
+		var t = RandomUtils.limit(0, 80);
+		var duration = this.cacuMoveTime(tileData.pos, target) + t;
 		var moveInfo = new MoveInfo(tileData, target, duration);
-		this.setTimeout(RandomUtils.limit(0, 80), () => {
+		this.setTimeout(t, () => {
 			this.applyFunc(GridCmd.TILE_MOVE, moveInfo);
 		})
 		return moveInfo;
@@ -933,6 +1034,27 @@ class GridModel extends BaseModel {
 	}
 
 	/**
+	 * 随机格子
+	 */
+	private randomTiles(count: number): Array<TileData> {
+		var arr: Array<TileData> = [];
+		for (let i = 0; i < this._hor; i++) {
+			for (let j = 0; j < this._ver; j++) {
+				var td = this.getTile(i, j);
+				if (td) {
+					arr.push(td);
+				}
+			}
+		}
+		arr.sort(SortUtils.random);
+		if (count < arr.length) {
+			arr.splice(count, arr.length - count);
+		}
+		return arr;
+	}
+
+
+	/**
 	 * 当前选择类型
 	 */
 	private get curSelectType(): number {
@@ -964,7 +1086,28 @@ class GridModel extends BaseModel {
 	 * 设置状态
 	 */
 	private setState(state: GridState) {
-		if (this.isState(GridState.Over)) return;
+		var end = () => {
+			this.applyControllerFunc(ControllerID.Game, GameCmd.SHOW_TIME_UP);
+			this.setTimeout(this.hintTime, () => {
+				this._state = GridState.End;
+				this.clear();
+			});
+		};
+		if (this.isState(GridState.Over)) {
+			if (state == GridState.Idle) {
+				end();
+			}
+			return;
+		} else if (this.isState(GridState.Idle) && state == GridState.Over) {
+			end();
+		}
+		if (this.isState(GridState.End)) {
+			if (state == GridState.Idle) {
+				this.clear();
+			}
+			return;
+		}
+
 		this._state = state;
 	}
 
@@ -1000,7 +1143,7 @@ class GridModel extends BaseModel {
 	 * 移除间隔
 	 */
 	private get removeInterval(): number {
-		return 100;
+		return 60;
 	}
 
 	/**
@@ -1008,6 +1151,34 @@ class GridModel extends BaseModel {
 	 */
 	private get effectInterval(): number {
 		return 80;
+	}
+
+	/**
+	 * 清理间隔
+	 */
+	private get clearInterval(): number {
+		return 200;
+	}
+
+	/**
+	 * 显示提示的时间
+	 */
+	private get hintTime(): number {
+		return 1200;
+	}
+
+	/**
+	 * 奖励时间
+	 */
+	private get awardTime(): number {
+		return 500;
+	}
+
+	/**
+	 * 奖励间隔
+	 */
+	private get awardInterval(): number {
+		return 400;
 	}
 }
 
@@ -1020,5 +1191,6 @@ enum GridState {
 	Select,
 	Remove,
 	Repair,
-	Over
+	Over,
+	End
 }

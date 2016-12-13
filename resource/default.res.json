@@ -1,12 +1,16 @@
 {
 	"groups": [
 		{
-			"keys": "fireparticle_png,items_in_json,items_in_png,smoke_json,smoke_png,storm_json,storm_png,thunder_json,thunder_png,thunderstar_png,time_select_json,time_select_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,arrow_png,bg_png,btn_pause_png,chest_bg_png,chest_open_png,chest_png,gem_1_l_png,gem_1_s_png,gem_1_png,gem_2_l_png,gem_2_s_png,gem_2_png,gem_3_l_png,gem_3_s_png,gem_3_png,gem_4_l_png,gem_4_s_png,gem_4_png,gem_bg_1_png,gem_bg_2_png,grid_bg_png,grid_border_1_png,grid_border_2_png,grid_bottom_png,hint_add_time_png,hint_fire_png,hint_go_png,hint_hurray_png,hint_time_start_png,hint_times_up_png,hint_unlock_png,hint_png,item_1_png,item_2_png,item_3_png,item_4_png,key_1_png,key_2_png,key_3_png,key_4_png,score_bg_1_png,score_bg_2_png,score_bg_png,select_1_png,select_2_png,select_3_png,select_4_png,time_1_png,time_2_png,time_3_png,time_4_png,time_bg_1_png,time_bg_2_png,time_bg_png,time_progress_png,times_bg_png,times_png,wood_png,door_png,door_json,hint_praise_3_png,hint_praise_2_png,hint_praise_1_png,fire0006_png,fire0005_png,fire0004_png,fire0003_png,fire0002_png,fire0001_png",
+			"keys": "",
 			"name": "loading"
 		},
 		{
-			"keys": "Cookies_ttf,door_json,door_png,hint_praise_2_png,hint_praise_3_png,hint_praise_1_png,fire0001_png,fire0002_png,fire0003_png,fire0004_png,fire0005_png,fire0006_png",
+			"keys": "Cookies_ttf",
 			"name": "preload"
+		},
+		{
+			"keys": "door_json,door_png,fire0001_png,fire0002_png,fire0003_png,fire0004_png,fire0005_png,fire0006_png,fireparticle_png,items_in_json,items_in_png,items_select_json,items_select_png,smoke_json,smoke_png,storm_json,storm_png,thunder_json,thunder_png,thunderstar_png,time_select_json,time_select_png,watercenter_json,watercenter_png,waterend_png,waterspout_png,arrow_png,bg_png,btn_pause_png,chest_bg_png,chest_open_png,chest_png,gem_1_l_png,gem_1_s_png,gem_1_png,gem_2_l_png,gem_2_s_png,gem_2_png,gem_3_l_png,gem_3_s_png,gem_3_png,gem_4_l_png,gem_4_s_png,gem_4_png,gem_bg_1_png,gem_bg_2_png,grid_bg_png,grid_border_1_png,grid_border_2_png,grid_bottom_png,hint_add_time_png,hint_fire_png,hint_go_png,hint_hurray_png,hint_praise_1_png,hint_praise_2_png,hint_praise_3_png,hint_time_start_add_png,hint_time_start_png,hint_times_up_png,hint_unlock_png,hint_png,item_1_png,item_2_png,item_3_png,item_4_png,key_1_png,key_2_png,key_3_png,key_4_png,key_5_png,score_bg_1_png,score_bg_2_png,score_bg_png,select_1_png,select_2_png,select_3_png,select_4_png,time_1_png,time_2_png,time_3_png,time_4_png,time_bg_1_png,time_bg_2_png,time_bg_png,time_progress_png,times_bg_png,times_png,wood_png",
+			"name": "game"
 		}
 	],
 	"resources": [
@@ -439,6 +443,26 @@
 			"url": "assets/anim/firefx/fire0006.png",
 			"type": "image",
 			"name": "fire0006_png"
+		},
+		{
+			"url": "assets/anim/items_select.json",
+			"type": "json",
+			"name": "items_select_json"
+		},
+		{
+			"url": "assets/anim/items_select.png",
+			"type": "image",
+			"name": "items_select_png"
+		},
+		{
+			"url": "assets/hint_time_start_add.png",
+			"type": "image",
+			"name": "hint_time_start_add_png"
+		},
+		{
+			"url": "assets/key_5.png",
+			"type": "image",
+			"name": "key_5_png"
 		}
 	]
 }

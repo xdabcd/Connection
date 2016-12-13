@@ -10,6 +10,7 @@ class GameScene extends BaseScene {
     }
 
     private _topBg: egret.Bitmap;
+    private _topMask: egret.Sprite;
     private _scoreBg: egret.Bitmap;
     private _score: Label;
     private _timesBg: egret.Bitmap;
@@ -31,6 +32,10 @@ class GameScene extends BaseScene {
 
         this.addChild(this._topBg = DisplayUtils.createBitmap("bg_png"));
         AnchorUtils.setAnchorX(this._topBg, 0.5);
+        this.addChild(this._topMask = new egret.Sprite);
+        DrawUtils.drawRect(this._topMask, this._topBg.width, this._topBg.height, 0xffffff);
+        AnchorUtils.setAnchorX(this._topMask, 0.5);
+        this._topMask.visible = false;
 
         this.addChild(this._scoreBg = DisplayUtils.createBitmap("score_bg_png"));
         AnchorUtils.setAnchor(this._scoreBg, 0.5);
@@ -70,6 +75,8 @@ class GameScene extends BaseScene {
         this._grid.y = h;
         this._topBg.x = w / 2;
         this._topBg.y = 0;
+        this._topMask.x = w / 2;
+        this._topMask.y = 0;
         this._scoreBg.x = w / 2;
         this._scoreBg.y = 200;
         this._score.x = this._scoreBg.x;
@@ -121,6 +128,22 @@ class GameScene extends BaseScene {
     }
 
     /**
+     * 得分晋级
+     */
+    public riseRank(rank: number) {
+        this._topMask.visible = true;
+        this._topMask.alpha = 1;
+        var tw = new Tween(this._topMask);
+        tw.to = { alpha: 0 };
+        tw.duration = 200;
+        tw.callBack = () => {
+            this._topMask.visible = false;
+        }
+        tw.start();
+        this._scoreBg.texture = RES.getRes("score_bg_" + rank + "_png")
+    }
+
+    /**
      * 更新得分
      */
     public updateScore(score: number, isAdd: boolean = false) {
@@ -151,39 +174,28 @@ class GameScene extends BaseScene {
 
         var tw1 = new Tween(score);
         tw1.duration = 20;
-        tw1.callBack = () => {
-            score.text = text;
-        }
         tw1.start();
 
         var tw2 = new Tween(score);
+        tw2.from = { text: text };
         tw2.delay = tw1.delay + tw1.duration;
         tw2.duration = 70;
-        tw2.callBack = () => {
-            score.textColor = col2;
-            score.strokeColor = col3;
-        }
         tw2.start();
 
         var tw3 = new Tween(score);
+        tw3.from = { textColor: col2, strokeColor: col3 };
         tw3.delay = tw2.delay + tw2.duration;
         tw3.duration = 90;
-        tw3.callBack = () => {
-            score.textColor = col0;
-            score.strokeColor = col1;
-        }
         tw3.start();
 
         var tw4 = new Tween(score);
+        tw4.from = { textColor: col0, strokeColor: col1 };
         tw4.delay = tw3.delay + tw3.duration;
         tw4.duration = 90;
-        tw4.callBack = () => {
-            score.textColor = col2;
-            score.strokeColor = col3;
-        }
         tw4.start();
 
         var tw5 = new Tween(score);
+        tw5.from = { textColor: col2, strokeColor: col3 };
         tw5.delay = tw4.delay + tw4.duration;
         tw5.duration = 40;
         tw5.callBack = () => {
@@ -198,6 +210,10 @@ class GameScene extends BaseScene {
      * 更新倍数
      */
     public updateTimes(times: number) {
+        if (times == 0) {
+            this._times.text = "";
+            return;
+        }
         this._times.text = "x" + times;
     }
 
@@ -213,16 +229,16 @@ class GameScene extends BaseScene {
         t.y = tr.y;
         var tw1 = new Tween(t);
         tw1.to = { y: this._times.y + 5 };
-        tw1.duration = 600;
+        tw1.duration = 500;
         tw1.start();
         var tw2 = new Tween(t);
         tw2.to = { x: this._times.x };
-        tw2.duration = 600;
+        tw2.duration = 500;
         tw2.ease = TweenEase.QuadOut;
         tw2.start();
         var tw3 = new Tween(t);
         tw3.to = { scaleY: 0.3 };
-        tw3.duration = 600;
+        tw3.duration = 500;
         tw3.ease = TweenEase.QuadOut;
         tw3.callBack = () => {
             t.scaleY = 1;
@@ -278,6 +294,7 @@ class GameScene extends BaseScene {
      * 显示时间完
      */
     public showTimesUp() {
+        this._countdown.over();
         var hint = ObjectPool.pop("Hint") as Hint;
         this._hintCon.addChild(hint);
         hint.y = -80;
@@ -285,11 +302,13 @@ class GameScene extends BaseScene {
     }
 
     /**
-     * 游戏结束
+     * 显示最后的奖励
      */
-    public gameOver() {
-        this._countdown.over();
-        this.showTimesUp();
+    public showLastAward() {
+        var hint = ObjectPool.pop("Hint") as Hint;
+        this._hintCon.addChild(hint);
+        hint.y = -80;
+        hint.show2("hint_hurray_png");
     }
 
     /**
@@ -300,6 +319,47 @@ class GameScene extends BaseScene {
         this._hintCon.addChild(hint);
         hint.y = -80;
         hint.show1("hint_praise_" + type + "_png", 0.5, 0.35);
+    }
+
+    /**
+     * 游戏结束
+     */
+    public gameOver() {
+
+    }
+
+    /**
+     * 奖励
+     */
+    public award(pos: Vector2, effect: TileEffect, times: number) {
+        this.updateTimes(times);
+        var tr = this._grid.getAbsPosition(pos.x, pos.y);
+        var tile = ObjectPool.pop("Tile") as Tile;
+        tile.reset();
+        tile.effect = effect;
+        tile.setOnTouch(null);
+        tile.addTo(this._timesCon);
+        tile.x = this._times.x;
+        tile.y = this._times.y;
+        tile.scaleX = tile.scaleY = 0.3;
+
+        var tw1 = new Tween(tile);
+        tw1.to = { y: tr.y };
+        tw1.duration = 500;
+        tw1.start();
+        var tw2 = new Tween(tile);
+        tw2.to = { x: tr.x };
+        tw2.duration = 500;
+        tw2.ease = TweenEase.QuadOut;
+        tw2.start();
+        var tw3 = new Tween(tile);
+        tw3.to = { scaleX: 1, scaleY: 1 };
+        tw3.duration = 500;
+        tw3.ease = TweenEase.QuadOut;
+        tw3.callBack = () => {
+            tile.destroy();
+        };
+        tw3.start();
     }
 
     /**

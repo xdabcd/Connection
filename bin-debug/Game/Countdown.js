@@ -7,8 +7,17 @@ var Countdown = (function (_super) {
     __extends(Countdown, _super);
     function Countdown() {
         _super.call(this);
+        this._isInit = true;
+        this._isBlink = false;
+        this._isOver = false;
         this.addChild(this._timeBg = DisplayUtils.createBitmap("time_bg_png"));
         AnchorUtils.setAnchor(this._timeBg, 0.5);
+        this.addChild(this._timeBg1 = DisplayUtils.createBitmap("time_bg_1_png"));
+        AnchorUtils.setAnchor(this._timeBg1, 0.5);
+        this.addChild(this._timeBg2 = DisplayUtils.createBitmap("time_bg_2_png"));
+        AnchorUtils.setAnchor(this._timeBg2, 0.5);
+        this._timeBg1.visible = false;
+        this._timeBg2.visible = false;
         this.addChild(this._timeProgress = DisplayUtils.createBitmap("time_progress_png"));
         AnchorUtils.setAnchor(this._timeProgress, 0.5);
         this._timeProgress.y = 16;
@@ -62,8 +71,13 @@ var Countdown = (function (_super) {
         this._topTime = top;
         this._curTime = top;
         this._isInit = true;
+        this._isBlink = false;
+        this._isOver = false;
     };
     p.update = function (delta) {
+        if (this._isOver) {
+            return;
+        }
         var cur = this._curTime ? this._curTime : 0;
         var top = this._topTime ? this._topTime : 1;
         var cp = cur / top;
@@ -82,6 +96,12 @@ var Countdown = (function (_super) {
         }
         else {
             this.setText(top * cp);
+            if (Math.round(top * cp) <= 10 && !this._isBlink) {
+                this.openBlink();
+            }
+            else if (this._isBlink && top * cp > 10) {
+                this.closeBlink();
+            }
         }
     };
     p.setTime = function (time) {
@@ -90,6 +110,8 @@ var Countdown = (function (_super) {
     };
     p.over = function () {
         var _this = this;
+        this._isOver = true;
+        this.closeBlink();
         var tw1 = new Tween(this._text);
         tw1.to = { scaleX: 0.35, scaleY: 0.35, alpha: 0 };
         tw1.duration = 400;
@@ -120,13 +142,14 @@ var Countdown = (function (_super) {
         this._bgMask.x = -this._timeProgress.width * (1 - per) + this._timeProgress.x;
     };
     p.setText = function (time) {
+        time = Math.round(time);
         if (time <= 3 && time > 0 && parseInt(this._ct) > time) {
-            this.blink();
+            this.showTime();
         }
         this._ct = time.toString();
         this._text.text = DateUtils.getFormatBySecond(time, 3);
     };
-    p.blink = function () {
+    p.showTime = function () {
         this._textMask.alpha = 1;
         this._textMask.text = this._text.text;
         this._text.scaleX = this._text.scaleY = 1.5;
@@ -139,6 +162,41 @@ var Countdown = (function (_super) {
         tw1.to = { scaleX: 1, scaleY: 1 };
         tw1.duration = 300;
         tw1.start();
+    };
+    p.openBlink = function () {
+        var _this = this;
+        this._isBlink = true;
+        this._timeBg1.visible = this._timeBg2.visible = true;
+        this._timeBg1.alpha = this._timeBg2.alpha = 0;
+        var tw = new Tween(this._timeBg1);
+        tw.to = { alpha: 1 };
+        tw.duration = 300;
+        tw.callBack = function () {
+            _this.blink();
+        };
+        tw.start();
+    };
+    p.closeBlink = function () {
+        this._isBlink = false;
+        this._timeBg1.visible = false;
+        this._timeBg2.visible = false;
+        TweenManager.removeTween(this._timeBg1);
+        TweenManager.removeTween(this._timeBg2);
+    };
+    p.blink = function () {
+        var _this = this;
+        var tw1 = new Tween(this._timeBg2);
+        tw1.to = { alpha: 1 };
+        tw1.duration = 300;
+        tw1.start();
+        var tw2 = new Tween(this._timeBg2);
+        tw2.to = { alpha: 0 };
+        tw2.duration = 150;
+        tw2.delay = tw1.duration + 30;
+        tw2.callBack = function () {
+            _this.blink();
+        };
+        tw2.start();
     };
     /**
      * 销毁
